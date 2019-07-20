@@ -24,22 +24,20 @@ argv[3] name of the sample-membership txt file
 
 
 
+    char sample_list[maxsamples*3+1]=""; //="A1,A2";
 
     char popname[10]= "GBR"; // argv[2]
-    char buf[256];
+    int start=1;
     for(int i = 1; i<number_samples; i++) // number_samples in popfilename
     {
 
       if (strcmp(population_codes[i],popname)==0){
-      //fprintf(stderr,"  Element %dth is %s and code is %s \n",i, sample_names[i], population_codes[i]);
-        fprintf(stderr,"  Element %dth is %s and code is %s \n",i, sample_names[i], population_codes[i]);
-        snprintf(buf, sizeof buf, "%s%s%s", sample_names[i],",", buf);
-        fprintf(stderr,"  list of samples is  %s \n \n ", buf);
+        fprintf(stderr,"  Element %dth is %s and its code is %s \n",i, sample_names[i], population_codes[i]);
+        snprintf(sample_list, sizeof sample_list, "%s%s%s",sample_list,",",sample_names[i]);
        }
     }
-    // fprintf(stderr," ");
+    fprintf(stderr,"For the mentioned population,  list of samples is  %s \n \n ", sample_list);
 
-    char sample_list[maxsamples*3+1]="A1,A2";
 
 
     htsFile *inf;
@@ -51,7 +49,7 @@ argv[3] name of the sample-membership txt file
     //Returns 0 on success, -1 on error or a positive integer if the list contains samples not present in the VCF header.
 
     if (subsmaple_results==0) {fprintf(stderr, "subsmaple is perfect! \n");}
-    if (subsmaple_results>0) {fprintf(stderr, " the list contains samples not present in the VCF header\n");}
+    // if (subsmaple_results>0) {fprintf(stderr, " the list contains samples not present in the VCF header\n");}
 
     // #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA00001	NA00002	NA00003	NA00004 A00003
     // should be tab delimited (no space)
