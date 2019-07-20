@@ -1,0 +1,4 @@
+A1	GBR
+A2	FIN
+A3	FIN
+A4	FIN
