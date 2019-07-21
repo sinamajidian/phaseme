@@ -1,5 +1,4 @@
 ##fileformat=VCFv4.1
-##contig=<ID=20,length=62435964,assembly=B36,md5=f,species="Homo sapiens",taxonomy=x>
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Phased Genotype">
 ##INFO=<ID=ALL_AF,Number=1,Type=Float,Description="ALT Allele Frequency for samples from all population together">
 ##INFO=<ID=AMR_AF,Number=1,Type=Float,Description="ALT Allele Frequency for samples from AMR based on AC/AN">
@@ -9,6 +8,5 @@
 ##INFO=<ID=VT,Number=1,Type=String,Description="indicates what type of variant the line represents">
 ##INFO=<ID=SNPSOURCE,Number=.,Type=String,Description="indicates if a snp was called when analysing the low coverage or exome alignment data">
 ##reference=GRCh37
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	A1	A2	A3
-20	16050408	rs149201999	T	C	100	PASS	VT=SNP GT:GQ 0|0 0|0 0|0
-20	16050409	rs119201999	T	C	100	PASS	VT=SNP GT:GQ 1|0 0|0 0|0
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	HG00096	HG00097	HG00098
+22	16050408	rs149201999	T	C	100	PASS	VT=SNP;	GT	0|0	1|0	0|1
