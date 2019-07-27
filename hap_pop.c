@@ -2,11 +2,11 @@
 #include <string.h>
 #include "htslib/vcf.h"
 
-#define maxsamples 100 // max population size
-#define maxsamplename 10 // max sample name and also pop code
-#define maxsnps 100 // max numebr of sample in vcf file
+#define maxsamples 1100 // max population size
+#define maxlengthname 20 // max sample name and also pop code
+#define maxsnps 1100 // max numebr of sample in vcf file
 
-int sample_pop_code(char popfilename[],char sample_names[maxsamplename][maxsamples],char population_codes[maxsamplename][maxsamples]);
+int sample_pop_code(char popfilename[],char sample_names[maxsamples][maxlengthname],char population_codes[maxsamples][maxlengthname]);
 
 
 int main(int argc, char *argv[]) {
@@ -18,9 +18,9 @@ argv[3] name of the sample-membership txt file
 
 */
 
-    char popfilename[10]; //"pop.txt";
+    char popfilename[maxlengthname]; //"pop.txt";
     strcpy(popfilename,argv[3]);
-    char sample_names[10][maxsamples], population_codes[maxsamplename][maxsamples];
+    char sample_names[maxsamples][maxlengthname], population_codes[maxsamples][maxlengthname];
     int number_samples;
     number_samples= sample_pop_code(popfilename, sample_names, population_codes);
 
@@ -28,24 +28,24 @@ argv[3] name of the sample-membership txt file
 
     char sample_list[maxsamples*3+1]=""; //="A1,A2";
 
-    char popname[10]; // "GBR";
+    char popname[maxlengthname]; // "GBR";
     strcpy(popname,argv[2]);
-     // int start=1; // to remove the last/first comma
+     int start=1; // to remove the last/first comma
     fprintf(stderr,"These samples belongs to the metioned population (%s): \n", popname);
     for(int i = 1; i<number_samples; i++) // number_samples in popfilename
     {
       if (strcmp(population_codes[i],popname)==0){
-        fprintf(stderr,"Sample %dth in the pop file is %s \n",i, sample_names[i]);
+        // fprintf(stderr,"Sample %dth in the pop file is %s \n",i, sample_names[i]);
         snprintf(sample_list, sizeof sample_list, "%s%c%s",sample_list,',',sample_names[i]);
         // snprintf(sample_list, sizeof sample_list, "%s%c%s",sample_names[i],',',sample_list); //HG00097,HG00097,  ??
        }
     }
-    fprintf(stderr,"So, the list of samples is  %s \n \n ", sample_list);
+    fprintf(stderr,"So, the list of samples for the mentioned pop is  %s \n \n ", sample_list);
 
 
 
     htsFile *inf;
-    char vcfname[10];
+    char vcfname[maxlengthname];
     strcpy(vcfname, argv[1]); //"my.vcf"
     inf = bcf_open(vcfname, "r");    // opening vcf file
     bcf_hdr_t *hdr = bcf_hdr_read(inf); // reading the header
@@ -136,7 +136,7 @@ argv[3] name of the sample-membership txt file
 
 
 
-int sample_pop_code(char popfilename[], char sample_names[maxsamplename][maxsamples], char population_codes[maxsamplename][maxsamples])
+int sample_pop_code(char popfilename[], char sample_names[maxsamples][maxlengthname], char population_codes[maxsamples][maxlengthname])
 {
 /*
 This function is for extracting sample names and the corresponding population names
@@ -148,7 +148,7 @@ Output: The sample and population names are saved in the second and third argume
 */
     FILE* fp = fopen(popfilename,"r");
     int counter_sample = 1;
-    char sample_name[maxsamplename], population_code[maxsamplename];
+    char sample_name[maxlengthname], population_code[maxlengthname];
 
     while (fscanf(fp,"%s\t%s",sample_name, population_code)==2){
         strcpy(sample_names[counter_sample],sample_name);
