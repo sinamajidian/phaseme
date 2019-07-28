@@ -82,22 +82,29 @@ argv[3] name of the sample-membership txt file
         continue;
       }
 
-      // ngt = bcf_get_format_int32(hdr, rec, "GT", &gt, &ngt_arr);
+
       ngt = bcf_get_genotypes(hdr, rec, &gt_arr, &ngt_arr); // ngt is a saclar ploidy*num_samples
       // fprintf(stderr, "snp index is %i \n", nsnp  );
       // fprintf(stderr, "ngt is %i \n", ngt  );
       // fprintf(stderr, "gt[0] is %i \n", gt[0]  );// rec->d.allele[bcf_gt_allele(gt[0])]
       // int max_ploidy = ngt/nsmpl; for check
+      // fprintf(stderr, " numebr sample is  %d \n", nsmpl  );
+      // fprintf(stderr, " snp index   is  %d \n", nsnp  );
+
+
       for (int i=0; i<nsmpl; i++)
       {
         int32_t *ptr = gt_arr + i*max_ploidy;
-        // since bi-allelic only one homologue is enough
+      //   // since bi-allelic only one homologue is enough
         int homologue=0; // =1
+        // fprintf(stderr, " ptr  is  %d \n", ptr  );
+        // fprintf(stderr, " ptr  is  %d \n", gt_arr  );
+
         int allele_index = bcf_gt_allele(ptr[homologue]);
         haplotype[i][nsnp-1] =allele_index;
-        // for (int j=0; j<max_ploidy; j++){
-        // int allele_index = bcf_gt_allele(ptr[j]);
-        // fprintf(stderr, "allele_index  %i", allele_index  );}
+      //   // for (int j=0; j<max_ploidy; j++){
+      //   // int allele_index = bcf_gt_allele(ptr[j]);
+      //   // fprintf(stderr, "allele_index  %i", allele_index  );}
       }
       // int is_phased = bcf_gt_is_phased(ptr[j]);
       // fprintf(stderr, "is phased ? %i \n", is_phased  );
