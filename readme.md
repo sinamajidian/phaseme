@@ -54,7 +54,8 @@ python ../utilities/improve.py out.vcf pairs.txt
 
 
 1- shapeit
-2- 00 Genomes reference panel haplotypes from [here](https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.html)
+
+2- 1000 Genomes reference panel haplotypes from [here](https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.html)
 
 
 
