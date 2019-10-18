@@ -1,23 +1,6 @@
 Phaseme
 ======
 
-
-The package contains two part.
-
-
-1- Reporting quality of phased VCF (including estimated haplotypes).
-
-2-  Improving the phased VCF 
-
-
-
-## Prerequisite  
-
-
-1- shapeit
-2- 00 Genomes reference panel haplotypes from [here](https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.html)
-
-
 ## input file
 
 - phased VCF
@@ -57,8 +40,22 @@ python ../utilities/encoderead3.py out.hapsamples
 
 
 ```
-python ../utilities/improve.py phased.vcf pairs.txt
+python ../utilities/improve.py out.vcf pairs.txt
 ```
+
+
+
+
+
+
+
+
+## Prerequisite  
+
+
+1- shapeit
+2- 00 Genomes reference panel haplotypes from [here](https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.html)
+
 
 
 
@@ -70,6 +67,20 @@ python ../utilities/improve.py phased.vcf pairs.txt
 
 [shapeit](https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.html)
 
+
+
+
+
+## future
+
+
+
+The package contains two parts.
+
+
+1- Reporting quality of phased VCF (including estimated haplotypes).
+
+2- Improving the phased VCF 
 
 
 
