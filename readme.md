@@ -40,7 +40,6 @@ shapeit --input-vcf out.vcf  -R ../../data/1000GP_Phase3/1000GP_Phase3_chr${chr}
 
 
 
-
 ## Step 2: Run PhaseMe to obtain stats and improve the quality of phase blocks
 
 ```
@@ -50,26 +49,7 @@ python utilities/encoderead3.py out.hapsamples
 python utilities/improve.py out.vcf pairs.txt
 ```
 
-
-
-
-
-
-
-
-## Citation:
-
-[IntegratedPhasing](https://github.com/vibansal/IntegratedPhasing)
-
-[shapeit](https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.html)
-
-
-
-
-
-## future
-
-
+## Future steps
 
 The package contains two parts.
 
@@ -77,7 +57,5 @@ The package contains two parts.
 1- Reporting quality of phased VCF (including estimated haplotypes).
 
 2- Improving the phased VCF 
-
-
 
 
