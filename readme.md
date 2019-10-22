@@ -1,7 +1,7 @@
 Phaseme
 ======
 
-PhaseMe is a tool set to assess the quality of the per read phasing informatoin and help to reduce the errors during this process.
+PhaseMe is a tool set to assess the quality of the per read phasing information and help to reduce the errors during this process.
 
 
 ## Input data
@@ -11,10 +11,10 @@ PhaseMe is a tool set to assess the quality of the per read phasing informatoin 
 3. You will need to run shapeit similar as below. 
 
 
-Note that shapit will complain about ungenotyped variations. Thus we recommend to remove these from the VCF file.
+Note that shapeit will complain about ungenotyped variations. Thus we recommend to remove these from the VCF file.
 
 
-## Step 1: Optain population information over Shapeit
+## Step 1: Obtain population information over shapeit
 
 
 ```
@@ -32,8 +32,9 @@ shapeit --input-vcf out.vcf  -R data/1000GP_Phase3/1000GP_Phase3_chr${chr}.hap.g
 ```
 
 python2 utilities/samplehaps.py out 500 >log_samplehaps
-python utilities/encoderead3.py out.hapsamples
-python utilities/improve.py out.vcf pairs.txt
+python utilities/encoderead.py out.hapsamples
+python utilities/qc.py out.vcf pairs.txt
+python utilities/improve.py out.vcf report.txt
 ```
 
 ## Future steps
