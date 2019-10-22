@@ -3,6 +3,13 @@
 
 import numpy as np
 
+
+
+
+tresh_match_mismatch= 1.1
+    
+    
+    
 def read_vcf_file(vcf_file_address):
     vcf_file = open(vcf_file_address,'r')
 
@@ -60,114 +67,70 @@ def read_vcf_file(vcf_file_address):
 
 
 
-def read_file_hap(file_hap_address):
 
-    file_hap = open(file_hap_address,'r'); 
-    pop_inf_dic={} # key variant index, value two lists 
-    for line in file_hap:
-        line_parts=line.strip().split('\t')     # ['42081', '0', '42096', '0']
-        snp1_idx=int(line_parts[0])
-        allele1_snp1=int(line_parts[1])
-        snp2_idx=int(line_parts[2])
-        allele1_snp2=int(line_parts[3])
-        #pairs_list.append([snp1_idx,allele1_snp1,snp2_idx,allele1_snp2])
 
-        snps_idx=[snp1_idx,snp2_idx]
-        snps_allele=[allele1_snp1,allele1_snp2]
-        host_idx=max(snps_idx)
-        guest_idx=min(snps_idx)
-        if host_idx not in pop_inf_dic.keys():
-            pop_inf_dic[host_idx]={'sim':list(),'dis':list()}
-        if allele1_snp1==allele1_snp2:
-            pop_inf_dic[host_idx]['sim'].append(guest_idx)  # sim shows the relation between two elements of a pop pair
-        else:
-            pop_inf_dic[host_idx]['dis'].append(guest_idx) 
+
+def read_file_mismatches(file_mismatches_address,var_pos_list):
+
+    file = open(file_mismatches_address,'r')
+    
+    ont_pop_blocks={} # key phase block
+    
+    # key variant index, value two lists 
+    for line in file:
+        if not line.strip().startswith('#'):
             
-    return pop_inf_dic
+            line_parts=line.strip().split('\t')     # ['42081', '0', '42096', '0']
+            
+            chrom=line_parts[0]
+            var_pos=int(line_parts[1])
+            
+            var_indx=var_pos_list.index(int(var_pos))
+            
+            line_part_2=line_parts[2].split(':')  # 60780:1|0
 
+            block_id=int(line_part_2[0])
+            allele=line_part_2[1]
+            
+            
+            if line_parts[3] == '.':
+                mismatch_list_pos=[]
+            else:
+                mismatch_list_pos=line_parts[3].split(',')
 
-
-
-# comparing one phase block with all pop information
-
-# block_id1=8889839 # test for chr 19
-# hap_block=hap_blocks[block_id1]
-# idc_block=idc_blocks[block_id1]
-
-# if 1:
-def compare_phase_block_pop(hap_block, idc_block, pop_inf_dic, interval):
-    
-    # input: interval is based on var_i 
-    # output: is ont_pop_block[var_idx]=ont_pop 
-    
-    #var_i is the index of variant within block
-    #var_idx is the index of vriant globally in the VCF file     
-    
-    ont_pop_block={}
-    min_interval=min(list(interval))
-    max_interval=max(list(interval))
-    interval_idx=set(idc_block[min_interval:max_interval]) # set is faster than list for check if element is in it
-    for var_i in interval: # the ONT hap block
-        alleles=hap_block[var_i]
-        var_idx=idc_block[var_i]
-        
-        #var_i is the index of variant within block
-        #var_idx is the index of vriant globally in the VCF file 
-        
-        
-        if var_idx in pop_inf_dic.keys():
-            list_pairs=pop_inf_dic[var_idx]
-            match_sim_list=[]
-            match_dis_list=[]
-            mismatch_sim_list=[]
-            mismatch_dis_list=[]
-            for sim_idx in pop_inf_dic[var_idx]['sim']: # sim shows the relation between two elements of a pop pair
+            if line_parts[4] == '.':
+                match_list_pos=[]
+            else:
+                match_list_pos=line_parts[4].split(',')
                 
-                #if sim_idx in idc_block: # if the SNP  of pairs is in this ONT block
-                try:
-                    alleles_pop=hap_block[idc_block.index(sim_idx)] # extract the allele of the snp 'sim' which is the other snp in pair
-                    if sim_idx in interval_idx:
-                        if alleles_pop==alleles: 
-                            match_sim_list.append(str(sim_idx))  
-                        else:
-                            mismatch_sim_list.append(str(sim_idx))     
-                except:
-                    pass
-                        
-            for sim_idx in pop_inf_dic[var_idx]['dis']: # sim shows the relation between two elements of a pop pair
-                #if sim_idx in idc_block: # if the SNP  of pairs is in this ONT block
-                try:
-                    alleles_pop=hap_block[idc_block.index(sim_idx)] # extract the allele of the snp 'sim' which is the other snp in pair
-                    if sim_idx in interval_idx:
-                        if alleles_pop==str(1-int(alleles[0]))+'|'+str(1-int(alleles[2])):  
-                            match_sim_list.append(str(sim_idx))  
-                        else:
-                            mismatch_sim_list.append(str(sim_idx))            
-                except:
-                    pass
-        
-            match_list=match_sim_list+match_dis_list
-            mismatch_list=mismatch_sim_list+mismatch_dis_list
+            
+            #match_list_len=len(match_list)
+            
+            match_list=[]
+            for pos in match_list_pos:
+                var_indx_match=var_pos_list.index(int(pos))
+                match_list.append(var_indx_match)
+            
+            mismatch_list=[]
+            for pos in mismatch_list_pos:
+                var_indx_mismatch=var_pos_list.index(int(pos))
+                mismatch_list.append(var_indx_mismatch)
+
             ont_pop=[match_list,mismatch_list]
-        else:
-            ont_pop=[[],[]]
-
-        ont_pop_block[var_idx]=ont_pop
-    #print('comparison is done')
-    return  ont_pop_block
-    
-
-    
-    
-#aa=0
+            
+            
+            if block_id in ont_pop_blocks:
+                ont_pop_blocks[block_id][var_indx]=ont_pop
+            else:
+                ont_pop_blocks[block_id]={var_indx:ont_pop}
+                
+            
+    return ont_pop_blocks
 
 
-#block_id1=27731803 # 60780  # 20588536 27731803 8889839
-#hap_block=hap_blocks[block_id1]
 
-#if 1:
 
-def decide_flip_cut(hap_blocks, idc_blocks, var_pos_list):
+def decide_flip_cut(hap_blocks, idc_blocks, var_pos_list,ont_pop_blocks):
 
 
 
@@ -176,7 +139,6 @@ def decide_flip_cut(hap_blocks, idc_blocks, var_pos_list):
 
 
 
-    tresh_match_mismatch= 0.5 
 
 
     for block_id1, hap_block in hap_blocks.items():
@@ -352,8 +314,6 @@ def write_out_vcf(phased_vcf_dic_improved2, vcf_file_improved_address):
 
 
 
-
-
 if __name__ == "__main__":
 
     
@@ -362,72 +322,34 @@ if __name__ == "__main__":
     
     Input:
     
-    output:
+    Output:
     
     """
 
 
     chrom_output=19
-    vcf_file_address = 'data/'+str(chrom_output)+'/out.vcf' #tst.vcf' #
+    vcf_file_address = 'data/'+str(chrom_output)+'/out1k.vcf' #tst.vcf' #
 
     hap_blocks, idc_blocks, var_pos_list, phased_vcf_dic, header_lines_list = read_vcf_file(vcf_file_address)
 
+    
+    
 
     #### Parsing pusod read
     # handling pop information reporting only once
 
     # reading short haplotype 1kblock file
-    file_hap_address='data/'+str(chrom_output)+'/pairs.txt'
+    
+    #19_report_mismatches
+    
+    file_mismatches_address='data/'+str(chrom_output)+'/'+str(chrom_output)+'_report_mismatches.txt'
 
+    ont_pop_blocks=read_file_mismatches(file_mismatches_address,var_pos_list)
 
-    pop_inf_dic=read_file_hap(file_hap_address)
-
-
-    # line_parts
-    # print(line_parts,'\n', pairs_list[0])
-    # print(len(pairs_list))
-    # print(pop_inf_dic[host_idx])
-    print(len(pop_inf_dic))
-
-
-    print('number of blocks in ont',len(hap_blocks))
-
-    # print('ont')
-    # for block_id, pos_block in pos_blocks.items():
-    #     print(block_id,len(pos_block))
-    # print('ont')
-    # for block_id1, hap_block  in hap_blocks.items():
-    #     print(block_id1,len(hap_block))
-    # hap_block[:2]
-
-
-
-    # comparing input phased vcf (hap_blocks_sample1_dic)with pop (short_blocks_dic_pos)
-
-    ont_pop_blocks={}
-    for block_id1, hap_block in hap_blocks.items(): # all ONT hap blocks  
-        idc_block=idc_blocks[block_id1]
-
-        #if block_id1==27731803: #27731803: 60780 20588536 8889839
-        ont_pop_block=compare_phase_block_pop(hap_block,idc_block,pop_inf_dic,range(len(hap_block)))
-        ont_pop_blocks[block_id1]=ont_pop_block
-
-    #hap_blocks.keys()
-    #var_pos_list[31566-1] #grep -v "#" out.vcf | sed -n 31566,31566p
-    #ont_pop_blocks[60780][31576]
-    # print(ont_pop_blocks[60780][292])
-    # print('for variant',var_pos_list[292-1],'we have',var_pos_list[268-1],var_pos_list[269-1],var_pos_list[261-1])
-
-    flip_list, cut_dic = decide_flip_cut(hap_blocks, idc_blocks, var_pos_list)
-
+    flip_list, cut_dic = decide_flip_cut(hap_blocks, idc_blocks, var_pos_list,ont_pop_blocks)
     phased_vcf_dic_improved = improve_vcf_flip(phased_vcf_dic, flip_list)
-
     phased_vcf_dic_improved2 = improve_vcf_cut(phased_vcf_dic_improved, hap_blocks, cut_dic)
-
-
-    vcf_file_improved_address = 'data/'+str(chrom_output)+'/out_improved.vcf' #tst.vcf' #
-
-
-
+    vcf_file_improved_address = 'data/'+str(chrom_output)+'/out_improved_'+str(tresh_match_mismatch)+'.vcf' #tst.vcf' #
     write_out_vcf(phased_vcf_dic_improved2, vcf_file_improved_address)
+
 
