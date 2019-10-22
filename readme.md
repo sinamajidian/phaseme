@@ -34,7 +34,7 @@ shapeit --input-vcf out.vcf  -R data/1000GP_Phase3/1000GP_Phase3_chr${chr}.hap.g
 python2 utilities/samplehaps.py out 500 >log_samplehaps
 python utilities/encoderead.py out.hapsamples
 python utilities/qc.py out.vcf pairs.txt
-python utilities/improve.py out.vcf report.txt
+python utilities/improver.py out.vcf report.txt
 ```
 
 ## Future steps

@@ -50,13 +50,13 @@ def read_vcf_file(vcf_file_address):
             ps_id_flags=gt_flags.split(":").index("PS")
             allele_sample1=sample1_split[gt_id_flags]        
             if '.' not in allele_sample1:
-                block_id1=int(sample1_split[ps_id_flags])
-                if block_id1 in hap_blocks:
-                    hap_blocks[block_id1].append(allele_sample1) # append new variants to the existing phase block
-                    idc_blocks[block_id1].append(var_idx)
+                block_id=int(sample1_split[ps_id_flags])
+                if block_id in hap_blocks:
+                    hap_blocks[block_id].append(allele_sample1) # append new variants to the existing phase block
+                    idc_blocks[block_id].append(var_idx)
                 else:
-                    hap_blocks[block_id1]=[allele_sample1] # creat new phase block
-                    idc_blocks[block_id1]=[var_idx]
+                    hap_blocks[block_id]=[allele_sample1] # creat new phase block
+                    idc_blocks[block_id]=[var_idx]
 
             else:
                 print('There is a vriant that ONT is not phased.. removed it first')
@@ -70,7 +70,7 @@ def read_vcf_file(vcf_file_address):
 
 
 
-def read_file_mismatches(file_mismatches_address,var_pos_list):
+def read_file_mismatches(file_mismatches_address, var_pos_list):
 
     file = open(file_mismatches_address,'r')
     
@@ -85,7 +85,7 @@ def read_file_mismatches(file_mismatches_address,var_pos_list):
             chrom=line_parts[0]
             var_pos=int(line_parts[1])
             
-            var_indx=var_pos_list.index(int(var_pos))
+            var_idx=var_pos_list.index(int(var_pos))+1  # 1 basesd indexing
             
             line_part_2=line_parts[2].split(':')  # 60780:1|0
 
@@ -108,21 +108,21 @@ def read_file_mismatches(file_mismatches_address,var_pos_list):
             
             match_list=[]
             for pos in match_list_pos:
-                var_indx_match=var_pos_list.index(int(pos))
-                match_list.append(var_indx_match)
+                var_idx_match=var_pos_list.index(int(pos))+1 # 1 basesd indexing
+                match_list.append(var_idx_match) 
             
             mismatch_list=[]
             for pos in mismatch_list_pos:
-                var_indx_mismatch=var_pos_list.index(int(pos))
-                mismatch_list.append(var_indx_mismatch)
+                var_idx_mismatch=var_pos_list.index(int(pos))+1 # 1 basesd indexing
+                mismatch_list.append(var_idx_mismatch)  
 
-            ont_pop=[match_list,mismatch_list]
+            ont_pop=[match_list, mismatch_list]
             
             
             if block_id in ont_pop_blocks:
-                ont_pop_blocks[block_id][var_indx]=ont_pop
+                ont_pop_blocks[block_id][var_idx]=ont_pop
             else:
-                ont_pop_blocks[block_id]={var_indx:ont_pop}
+                ont_pop_blocks[block_id]={var_idx:ont_pop}
                 
             
     return ont_pop_blocks
@@ -130,28 +130,24 @@ def read_file_mismatches(file_mismatches_address,var_pos_list):
 
 
 
-def decide_flip_cut(hap_blocks, idc_blocks, var_pos_list,ont_pop_blocks):
+def decide_flip_cut(hap_blocks, idc_blocks, var_pos_list, ont_pop_blocks):
 
 
 
     flip_list=[]
     cut_dic={}
 
+    for block_id, hap_block in hap_blocks.items():
+        cut_dic[block_id]=[]
 
-
-
-
-    for block_id1, hap_block in hap_blocks.items():
-        cut_dic[block_id1]=[]
-
-        idc_block=idc_blocks[block_id1]
-        ont_pop_block=ont_pop_blocks[block_id1]
+        idc_block=idc_blocks[block_id]
+        ont_pop_block=ont_pop_blocks[block_id]
 
         for var_i, var_idx in enumerate(idc_block): 
             #var_i is the index of variant within block
-            #var_idx is the index of vriant globally in the VCF file 
+            #var_idx is the index of vriant globally in the VCF file  1-based
 
-            ont_pop = ont_pop_block[var_idx]  # after a cut, it may use a newr version of this vsrisble
+            ont_pop = ont_pop_block[var_idx]  # after a cut, it may use a newer version of this vsrisble
             if ont_pop==[[],[]]:
                 out_pairs='.'
             else:
@@ -189,8 +185,8 @@ def decide_flip_cut(hap_blocks, idc_blocks, var_pos_list,ont_pop_blocks):
                     flip_list.append(var_idx)
                 if condition_cut and not condition_flip:
                     cut_pos=var_pos_list[var_idx-1] # cut_pos the starting position of new block
-                    print('cut candidate', cut_pos,var_i,var_idx)   
-                    cut_dic[block_id1].append(var_idx)
+                    print('cut candidate', cut_pos, var_i, var_idx)   
+                    cut_dic[block_id].append(var_idx)
                     interval=range(var_i,len(hap_block))
 
 
@@ -237,10 +233,10 @@ def improve_vcf_cut(phased_vcf_dic_improved, hap_blocks, cut_dic):
 
     new_blockid_dic={}
 
-    for block_id1 in hap_blocks.keys():
+    for block_id in hap_blocks.keys():
 
-        cut_block=cut_dic[block_id1]
-        idc_block=idc_blocks[block_id1]
+        cut_block=cut_dic[block_id]
+        idc_block=idc_blocks[block_id]
 
         cut_block_complete=[idc_block[0]]+cut_block+[idc_block[-1]] # including start and end var_idx of block
 
@@ -255,28 +251,27 @@ def improve_vcf_cut(phased_vcf_dic_improved, hap_blocks, cut_dic):
 
     phased_vcf_dic_improved2=phased_vcf_dic_improved
 
-    sorted_var_indx=sorted(phased_vcf_dic_improved.keys())
+    sorted_var_idx=sorted(phased_vcf_dic_improved.keys())
 
     cut_dic_remain=cut_dic
 
-    for var_indx in sorted_var_indx: # imprvd_phased_vcf_dic
+    for var_idx in sorted_var_idx: # imprvd_phased_vcf_dic
 
-        #if var_indx in dic1: # those variant that we need to change their block id 
-        line_parts=phased_vcf_dic_improved[var_indx]
+        #if var_idx in dic1: # those variant that we need to change their block id 
+        line_parts=phased_vcf_dic_improved[var_idx]
         gt_flags, sample1=line_parts[8:10]
         sample1_split=sample1.split(":")
         ps_id_flags=gt_flags.split(":").index("PS")
-        block_id1=int(sample1_split[ps_id_flags])
+        block_id=int(sample1_split[ps_id_flags])
 
-        new_blockid=str(new_blockid_dic[var_indx])
+        new_blockid=str(new_blockid_dic[var_idx])
 
 
-        #cut_dic[block_id1]
         sample1_split_changed=sample1.split(":")
         sample1_split_changed[ps_id_flags]=new_blockid
         line_parts_changed=line_parts
         line_parts_changed[9]=':'.join(sample1_split_changed)
-        phased_vcf_dic_improved2[var_indx]=line_parts_changed
+        phased_vcf_dic_improved2[var_idx]=line_parts_changed
 
     return phased_vcf_dic_improved2
 
@@ -291,12 +286,12 @@ def write_out_vcf(phased_vcf_dic_improved2, vcf_file_improved_address):
     # reading phased VCF file,  use grep before that, only 0|1 or 1|0. bi -allelic
     vcf_file_improved = open(vcf_file_improved_address,'w');  # phased_vcf_dic
 
-    sorted_var_indx=sorted(phased_vcf_dic_improved2.keys())
+    sorted_var_idx=sorted(phased_vcf_dic_improved2.keys())
 
     for header_line in header_lines_list:
         vcf_file_improved.write(header_line+'\n')
-    for var_indx in sorted_var_indx: # imprvd_phased_vcf_dic
-        line_parts=phased_vcf_dic_improved2[var_indx]
+    for var_idx in sorted_var_idx: # imprvd_phased_vcf_dic
+        line_parts=phased_vcf_dic_improved2[var_idx]
         vcf_file_improved.write('\t'.join(line_parts)+'\n')
     vcf_file_improved.close()
     
@@ -328,28 +323,22 @@ if __name__ == "__main__":
 
 
     chrom_output=19
-    vcf_file_address = 'data/'+str(chrom_output)+'/out1k.vcf' #tst.vcf' #
+    vcf_file_address = 'data/'+str(chrom_output)+'/out10k.vcf' #tst.vcf' #
 
     hap_blocks, idc_blocks, var_pos_list, phased_vcf_dic, header_lines_list = read_vcf_file(vcf_file_address)
 
     
     
 
-    #### Parsing pusod read
-    # handling pop information reporting only once
-
-    # reading short haplotype 1kblock file
-    
-    #19_report_mismatches
     
     file_mismatches_address='data/'+str(chrom_output)+'/'+str(chrom_output)+'_report_mismatches.txt'
 
-    ont_pop_blocks=read_file_mismatches(file_mismatches_address,var_pos_list)
+    ont_pop_blocks=read_file_mismatches(file_mismatches_address, var_pos_list)
 
-    flip_list, cut_dic = decide_flip_cut(hap_blocks, idc_blocks, var_pos_list,ont_pop_blocks)
-    phased_vcf_dic_improved = improve_vcf_flip(phased_vcf_dic, flip_list)
-    phased_vcf_dic_improved2 = improve_vcf_cut(phased_vcf_dic_improved, hap_blocks, cut_dic)
-    vcf_file_improved_address = 'data/'+str(chrom_output)+'/out_improved_'+str(tresh_match_mismatch)+'.vcf' #tst.vcf' #
-    write_out_vcf(phased_vcf_dic_improved2, vcf_file_improved_address)
+    flip_list, cut_dic = decide_flip_cut(hap_blocks, idc_blocks, var_pos_list, ont_pop_blocks)
+#     phased_vcf_dic_improved = improve_vcf_flip(phased_vcf_dic, flip_list)
+#     phased_vcf_dic_improved2 = improve_vcf_cut(phased_vcf_dic_improved, hap_blocks, cut_dic)
+#     vcf_file_improved_address = 'data/'+str(chrom_output)+'/out_improved_'+str(tresh_match_mismatch)+'.vcf' #tst.vcf' #
+#     write_out_vcf(phased_vcf_dic_improved2, vcf_file_improved_address)
 
 

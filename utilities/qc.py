@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
 
     chrom_output=19
-    vcf_file_address = 'data/'+str(chrom_output)+'/out1k.vcf' #tst.vcf' #
+    vcf_file_address = 'data/'+str(chrom_output)+'/out10k.vcf' #tst.vcf' #
 
     hap_blocks, idc_blocks, var_pos_list, phased_vcf_dic, header_lines_list = read_vcf_file(vcf_file_address)
 
