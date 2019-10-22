@@ -3,7 +3,7 @@
 
 
 
-Warning: more than 10Gb.
+The 1000 Genomes haplotypes can be downloaded as following.
 
 ```
 wget https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.tgz
@@ -11,13 +11,4 @@ wget https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.tgz
 wget https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3_chrX.tgz
 ```
 
-
-## Citation:
-
-[1000G](https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.html)
-
-
-
-
-
-
+Warning: These are more than 10Gb.
