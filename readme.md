@@ -37,13 +37,4 @@ python utilities/qc.py out.vcf pairs.txt
 python utilities/improver.py out.vcf report.txt
 ```
 
-## Future steps
-
-The package contains two parts.
-
-
-1- Reporting quality of phased VCF (including estimated haplotypes).
-
-2- Improving the phased VCF 
-
 
