@@ -23,6 +23,9 @@ shapeit -check --input-vcf  your_out.vcf -R data/1000GP_Phase3/1000GP_Phase3_chr
 
 shapeit --input-vcf out.vcf  -R data/1000GP_Phase3/1000GP_Phase3_chr${chr}.hap.gz  data/1000GP_Phase3/1000GP_Phase3_chr${chr}.legend.gz  data/1000GP_Phase3/1000GP_Phase3.sample  -M data/1000GP_Phase3/genetic_map_chr${chr}_combined_b37.txt --output-log out1 --output-graph out.graph --exclude-snp  out.snp.strand.exclude
 
+
+python population.py
+
 ```
 
 
@@ -30,9 +33,6 @@ shapeit --input-vcf out.vcf  -R data/1000GP_Phase3/1000GP_Phase3_chr${chr}.hap.g
 ## Step 2: Run PhaseMe to obtain stats and improve the quality of phase blocks
 
 ```
-
-python2 utilities/samplehaps.py out 500 >log_samplehaps
-python utilities/encoderead.py out.hapsamples
 python utilities/qc.py out.vcf pairs.txt
 python utilities/improver.py out.vcf report.txt
 ```
