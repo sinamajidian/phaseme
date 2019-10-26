@@ -1,6 +1,7 @@
 
  #!/usr/bin/env python3
 
+from sys import argv
 import subprocess
 import random
     
@@ -10,11 +11,48 @@ import random
 
 
 
-SHAPEIT="/home/ssm/Downloads/phaseme/shapeit"
 
 
 
-THRESH=0.98
+def run_shapeit(input_vcf, 1000G_address):
+
+	vcf_chr = input_vcf[:-4]
+
+
+
+	# check for ungenotype
+	# check for vcf not to be empty 
+	
+
+
+	chrom = 22	
+	
+	# for chrom in range(1,24):
+
+
+	## split input vcf per chromosome
+
+
+	# vcf_chr = input_vcf[:-4]+str(chrom)+".vcf"
+	# split_vcf = "grep # "+input_vcf+">"+vcf_chr+"; " grep "+str(chrom)+" >>"+vcf_chr
+	# subprocess.call(split_vcf, shell=True)
+
+
+
+	shapeit_check= SHAPEIT+" -check --input-vcf "+vcf_chr+".vcf -R "+1000G_address+"1000GP_Phase3_chr"+str(chrom)+".hap.gz "+1000G_address+"1000GP_Phase3_chr"+str(chrom)+".legend.gz  "+1000G_address+"1000GP_Phase3.sample --output-log files/log_shapeit_check"
+
+	subprocess.call(shapeit_check, shell=True)
+
+	shapeit_generate_graph= SHAPEIT+" --input-vcf  "+vcf_chr+" -R "+1000G_address+"1000GP_Phase3_chr"+str(chrom)+".hap.gz "+1000G_address+"1000GP_Phase3_chr"+str(chrom)+".legend.gz "+1000G_address+"1000GP_Phase3.sample  -M "+1000G_address+"genetic_map_chr"+str(chrom)+"_combined_b37.txt  --output-log files/log_shapeit_graph --output-graph "+vcf_chr+".graph --exclude-snp  "+vcf_chr+".snp.strand.exclude"
+
+	subprocess.call(shapeit_generate_graph, shell=True)
+
+	 # return  output of subprocess
+
+
+	return 1
+
+
 
         
 
@@ -65,11 +103,10 @@ def extract_pairs(haplotype1_samples):
     num_variants = len(haplotype1_samples[0])
 
     pairs =[];
-    W = 10                  # number of neighbour variants to be checked 
 
     for i in range(num_variants):
 
-        for j in range(i+1, min(num_variants, i+W)):
+        for j in range(i+1, min(num_variants, i+NEIGHBOURS)):
 
             identical_phasing, opposite_phasing= pairwise(haplotype1_samples, num_samples, i, j)
 
@@ -101,20 +138,18 @@ def report_pairs(file_pair_address, pairs, var_pos_list):
     file_pairs.close()
     return 1
 
-if __name__ == "__main__":
 
 
-	num_samples = 500
 
-	#var_pos_list, allele1_list_samples= extract_samples()
 
+def sample_haplotype_graph(input_graph, num_samples):
 	haplotype1_samples = []
 	
 	for sample_i in range(num_samples):
 
 		subprocess.call("mkdir files", shell=True)
 		seed = random.randint(1,10000000)
-		shapeit_sample_hap_graph= SHAPEIT+" -convert --seed "+str(seed)+" --input-graph chr22_haplotype.graph --output-sample files/hap_sample_"+str(sample_i)+" -L files/log_sample_"+str(sample_i)
+		shapeit_sample_hap_graph= SHAPEIT+" -convert --seed "+str(seed)+" --input-graph "+str(input_graph)+" --output-sample files/hap_sample_"+str(sample_i)+" -L files/log_sample_"+str(sample_i)
 
 		subprocess.call(shapeit_sample_hap_graph, shell=True)
 	
@@ -122,9 +157,46 @@ if __name__ == "__main__":
 		var_pos_list, haplotype1  = read_haplotype_sample(haplotype_sample_address)
 
 		haplotype1_samples.append(haplotype1)
+	return haplotype1_samples, var_pos_list
 
+
+
+
+
+
+
+
+
+
+if __name__ == "__main__":
+
+	
+	SHAPEIT="/home/ssm/Downloads/phaseme/shapeit"
+
+	NEIGHBOURS = 5                 # number of neighbour variants to be checked 
+
+	THRESH=0.94
+
+	num_samples = 20  # number that we sample the haplotype graph (output of shapeit)
+
+
+
+
+
+	# input_vcf = "out.vcf"  # argv[1]
+	
+	# 1000G_address = "data/1000GP_Phase3/" # argv[2]
+
+	
+	# run_shapeit(input_vcf, 1000G_address)
+
+	
+	haplotype_graph = "out.graph" # "chr22.graph"
+
+	haplotype1_samples, var_pos_list = sample_haplotype_graph(haplotype_graph, num_samples)
     
 	pairs = extract_pairs(haplotype1_samples)
+	
 	
 	file_pair_address = 'pairs_500.txt' 
 	report_pairs(file_pair_address, pairs, var_pos_list)
