@@ -14,7 +14,7 @@ import random
 
 
 
-def run_shapeit(input_vcf, 1000G_address):
+def run_shapeit(input_vcf, data_1000G_address):
 
 	vcf_chr = input_vcf[:-4]
 
@@ -173,11 +173,11 @@ if __name__ == "__main__":
 	
 	SHAPEIT="/home/ssm/Downloads/phaseme/shapeit"
 
-	NEIGHBOURS = 5                 # number of neighbour variants to be checked 
+	NEIGHBOURS = 10                 # number of neighbour variants to be checked 
 
-	THRESH=0.94
+	THRESH=0.98
 
-	num_samples = 20  # number that we sample the haplotype graph (output of shapeit)
+	num_samples = 500  # number that we sample the haplotype graph (output of shapeit)
 
 
 
@@ -185,10 +185,10 @@ if __name__ == "__main__":
 
 	# input_vcf = "out.vcf"  # argv[1]
 	
-	# 1000G_address = "data/1000GP_Phase3/" # argv[2]
+	# data_1000G_address = "data/1000GP_Phase3/" # argv[2]
 
 	
-	# run_shapeit(input_vcf, 1000G_address)
+	# run_shapeit(input_vcf, data_1000G_address)
 
 	
 	haplotype_graph = "out.graph" # "chr22.graph"
