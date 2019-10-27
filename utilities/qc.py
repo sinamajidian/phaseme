@@ -23,7 +23,14 @@ def read_vcf_file(vcf_file_address):
     line_number_het_list = []            # line number of hetrozygous variant. We need it for reporting improved version
 
     first_het_variant = True
-    line_number=0
+    line_number = 0
+    
+    homozygous0_num = 0
+    homozygous1_num = 0
+    hetrozygous_nonphased = 0
+    hetrozygous_phased = 0
+    
+    
     for line in vcf_file:
         
         line_number += 1
@@ -52,8 +59,6 @@ def read_vcf_file(vcf_file_address):
             format_genotype_splitted = format_genotype.split(':')
             
             gt_index = format_genotype_splitted.index("GT")           #  index of allele in  values_genotype 
-            ps_index = format_genotype_splitted.index("PS")           #  index of phase set in values_genotype 
-            
             
             allele = values_genotype_splitted[gt_index]
             
@@ -65,15 +70,24 @@ def read_vcf_file(vcf_file_address):
                 exit(1)
                 
             elif '/' in allele:
-                print("There is a vriant with genomic position "+str(var_pos)+" that is not phased. Remove it first.")            
-                exit(1)
+                #print("There is a vriant with genomic position "+str(var_pos)+" that is not phased. Remove it first.")            
+                #exit(1)                
+                hetrozygous_nonphased += 1
+
+                if allele == '0|0' or allele == '0/0':
+                    homozygous0_num += 1
                 
-            elif (allele == '0|0' or allele == '1|1'):
-                # homozygous variant
-                pass
-            
+                elif allele == '1|1' or allele == '1/1':
+                    homozygous1_num += 1
+                
+                
             elif (allele == '0|1' or allele == '1|0'):
+            
+                hetrozygous_phased += 1
+                
                 line_number_het_list.append(line_number)
+                
+                ps_index = format_genotype_splitted.index("PS")           #  index of phase set in values_genotype 
                 id_block = values_genotype_splitted[ps_index]
                 
                 
@@ -104,12 +118,28 @@ def read_vcf_file(vcf_file_address):
     # # for the last het variant, we  finish the last block.
     allele_blocks.append(allele_block)
     var_pos_blocks.append(var_pos_block)
-                    
-            
+    
+    
+          
+    genomic_length_blocks = [] 
+    
+    for var_pos_block in var_pos_blocks:
+        genomic_length_blocks.append(var_pos_block[-1]-var_pos_block[0])
+        
+    values_sorted = sorted(genomic_length_blocks, reverse=True)
+    csum_values = np.cumsum(values_sorted)
+    n2 = int(sum(values_sorted)/2)
+    csumn2 = min(csum[csum >= n2])
+    ind = np.where(csum == csumn2)
+    n50 = values_sorted[int(ind[0])]
+
+        
+    
+    stats_vcf = [homozygous0_num, homozygous1_num, hetrozygous_nonphased, hetrozygous_phased, genomic_length_blocks, n50]
 
 
 
-    return header_lines_list, var_pos_all, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks
+    return header_lines_list, var_pos_all, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf
 
 
 
@@ -126,15 +156,11 @@ def read_file_pairs_forward(file_pairs_address, var_pos_all):
 
         
         
-        snv1_index = int(line_parts[0])
-        snv1_pos = var_pos_all[snv1_index-1]
-        allele1_snv1 = int(line_parts[1])
-        
-        snv2_index = int(line_parts[2])
-        snv2_pos = var_pos_all[snv2_index-1]
-        allele1_snv2 = int(line_parts[3])
-        
+        snv1_pos = int(line_parts[0]) 
+        snv2_pos = int(line_parts[1])                
 
+        relation_phasing = line_parts[2]
+        
         snvs_pos = [snv1_pos, snv2_pos]
         host_pos = max(snvs_pos)
         guest_pos = min(snvs_pos)
@@ -145,19 +171,15 @@ def read_file_pairs_forward(file_pairs_address, var_pos_all):
             # second list opposite phase
             pop_inf_dic[host_pos] = [[], []]
             
-        if allele1_snv1 == allele1_snv2:
+        if relation_phasing == 'identical':
             pop_inf_dic[host_pos][0].append(guest_pos)  
-        else:
+        elif relation_phasing == 'opposite':
             pop_inf_dic[host_pos][1].append(guest_pos) 
             
-    return pop_inf_dic
+    return pop_inf_dic  # [vars_identical_phase, vars_opposite_phase]=pop_inf_dic[var_pos]
 
 
 
-
-
-
- 
 
 
 def read_file_pairs_forward_backward(file_pairs_address, var_pos_all):
@@ -171,50 +193,44 @@ def read_file_pairs_forward_backward(file_pairs_address, var_pos_all):
         
         line_parts = line.strip().split('\t')     # ['42081', '0', '42096', '0']
 
-        
-        
-        snv1_index = int(line_parts[0])
-        snv1_pos = var_pos_all[snv1_index-1]
-        allele1_snv1 = int(line_parts[1])
-        
-        snv2_index = int(line_parts[2])
-        snv2_pos = var_pos_all[snv2_index-1]
-        allele1_snv2 = int(line_parts[3])
-          
+         
+        snv1_pos = int(line_parts[0]) 
+        snv2_pos = int(line_parts[1])                
+
+        relation_phasing = line_parts[2]
         
         host_pos = snv1_pos
         guest_pos = snv2_pos
         
         if host_pos not in pop_inf_dic.keys():
             
-            # first list identical phasing 
-            # second list opposite phasing 
+            # first list identical phase
+            # second list opposite phase
             pop_inf_dic[host_pos] = [[], []]
             
-        if allele1_snv1 == allele1_snv2:
+        if relation_phasing == 'identical':
             pop_inf_dic[host_pos][0].append(guest_pos)  
-        else:
+        elif relation_phasing == 'opposite':
             pop_inf_dic[host_pos][1].append(guest_pos) 
-            
-            
+   
             
         host_pos = snv2_pos
         guest_pos = snv1_pos
         
         if host_pos not in pop_inf_dic.keys():
             
-            # first list identical phasing 
-            # second list opposite phasing 
+            # first list identical phase
+            # second list opposite phase
             pop_inf_dic[host_pos] = [[], []]
             
-        if allele1_snv1 == allele1_snv2:
+        if relation_phasing == 'identical':
             pop_inf_dic[host_pos][0].append(guest_pos)  
-        else:
+        elif relation_phasing == 'opposite':
             pop_inf_dic[host_pos][1].append(guest_pos) 
             
-    return pop_inf_dic
+    return pop_inf_dic  # [vars_identical_phase, vars_opposite_phase]=pop_inf_dic[var_pos]
 
-
+      
 
 
 def compare_phase_block_pop(allele_block, var_pos_block, pop_inf_dic, lower_bound, upper_bound):
@@ -241,6 +257,7 @@ def compare_phase_block_pop(allele_block, var_pos_block, pop_inf_dic, lower_boun
             if var_pos in pop_inf_dic.keys():
     
                 [vars_identical_phase, vars_opposite_phase]=pop_inf_dic[var_pos]  
+        
                 matched_identical_phase_list=[]
                 mismatched_identical_phase_list=[]
                 matched_opposite_phase_list=[]
@@ -331,10 +348,11 @@ def report_comparison(report_out_address, comparison_result_blocks, chrom_output
             
             if len(matched_list)+len(mismatched_list):                # if we have population information
                 if len(matched_list):
-                    qual=len(matched_list)/(len(mismatched_list)+len(matched_list))
+                    qual = len(matched_list)/(len(mismatched_list)+len(matched_list))
                 else:
-                    qual=0
+                    qual = 0
                 qual_block.append(qual)
+                
                 
             
 
@@ -363,24 +381,42 @@ def report_comparison(report_out_address, comparison_result_blocks, chrom_output
 
 
 
-def report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks):
-    file_report_qc= open(report_qc_address, 'w'); 
-    file_report_qc.write("Quality report for "+str(chrom_output)+":\n \n")
+def report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf):
     
+    [homozygous0_num, homozygous1_num, hetrozygous_nonphased, hetrozygous_phased, genomic_length_blocks, n50] = stats_vcf
+    
+    file_report_qc= open(report_qc_address, 'w'); 
+    file_report_qc.write("Quality report for chromosome "+str(chrom_output)+":\n \n")
+    
+    file_report_qc.write("Number of homozygous variants is "+str(homozygous0_num+homozygous1_num)+", including "+str(homozygous0_num)+" variants with 0|0 and "+str(homozygous1_num)+" variants with 1|1:.\n")
+    file_report_qc.write("Number of non-phased heterozygous variants is "+str(hetrozygous_nonphased)+".\n")
+    file_report_qc.write("Number of heterozygous variants in all blocks is "+str(hetrozygous_phased)+".\n\n")
+    
+    file_report_qc.write("N50 of phase blocks is "+str(n50)+"bp.\n\n")
     
     for block_i, block_id  in enumerate(id_blocks):
         
         qual_block=qual_blocks[block_i]
         allele_block=allele_blocks[block_i]
+        genomic_length_block = genomic_length_blocks[block_i]
         
         
-        file_report_qc.write("Phase block "+str(block_id)+":\n")
-    
-        q=np.mean(qual_block)
+        file_report_qc.write("Phase block "+str(block_i)+":\n")
         
-        file_report_qc.write("Quality of block is "+str(round(q,5))+".\n")
+        
+        file_report_qc.write("The phase block spans "+str(genomic_length_block)+" bases.\n")
+        file_report_qc.write("The genomic position of first variant of the phase block is "+str(block_id)+".\n")
+        
+        if len(qual_block):
+            
+            q=np.mean(qual_block)
+            file_report_qc.write("Quality of block is "+str(round(q,5))+".\n")
 
-        
+        else:
+            
+            file_report_qc.write("Quality of block: There is no population information for this block.\n")
+            
+            
         file_report_qc.write("Number of variants in the phase block is "+str(len(allele_block))+".\n")
         
 
@@ -413,14 +449,14 @@ if __name__ == "__main__":
     """
 
 
-    chrom_output=19
-    vcf_file_address = 'data/'+str(chrom_output)+'/out10k.vcf' #tst.vcf' #
+    chrom_output=22
+    vcf_file_address = 'data/'+str(chrom_output)+'/a22.vcf' #tst.vcf' #
 
-    header_lines_list, var_pos_all, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks = read_vcf_file(vcf_file_address)
+    header_lines_list, var_pos_all, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf = read_vcf_file(vcf_file_address)
 
         
 
-    file_pairs_address='data/'+str(chrom_output)+'/pairs10k.txt'
+    file_pairs_address='data/'+str(chrom_output)+'/pairs_500_10k.txt'
     pop_inf_dic=read_file_pairs_forward(file_pairs_address, var_pos_all) #_backward for reporting both
     #pop_inf_dic=read_file_pairs_forward_backward(file_pairs_address, var_pos_all) #_backward for reporting both
 
@@ -453,7 +489,7 @@ if __name__ == "__main__":
         
 
     report_qc_address='data/'+str(chrom_output)+'/'+str(chrom_output)+'_report_qc.txt' #
-    report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks)
+    report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf)
 
   
 
