@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-#!/usr/bin/env python3
-
 
 import numpy as np
 
@@ -10,30 +8,57 @@ import numpy as np
 
 tresh_match_mismatch= 1.1
     
+    
+    
 def read_vcf_file(vcf_file_address):
+    
+    
+    """
+    Reading the vcf file
+    
+    input: vcf file
+    outputs: 
+            header_lines_list: list of string. each string is a line that starts with #.
+            var_pos_all: genomic position of all variants in the vcf file. 
+            line_number_het_list: list of line numbers in the vcf file that are phased hetrozygous variant (needed in phasing)
+            id_blocks: list of ids of phas blocks
+            allele_blocks: list of list
+            var_pos_blocks: list of list
+            stats_vcf: [homozygous0_num, homozygous1_num, hetrozygous_nonphased, hetrozygous_phased, genomic_length_blocks, n50]
+    
+    
+    """
+    
+    
+    
     vcf_file = open(vcf_file_address,'r')
 
     header_lines_list=[]           # header lines  
-    #var_lines_list=[]              # needed for reporting improved VCF containing all lines except header.  (both homo and hetro) 
-    
+    var_lines_list=[]              # needed for reporting improved VCF containing all lines except header.  (both homo and hetro) 
     
     var_pos_all=[]                # position of variants all blocks consequently. It can be used for converting variant index to genomic position (in pairs.txt)
 
-    # The followings are for hetrozygous variants.
+    # The followings are for phased hetrozygous variants.
     id_blocks = []                 # list of list. Outer list corresponds to phase block. Inner list contains block_id
     
     allele_blocks = []             # list of list. Outer list corresponds to phase block. Inner list contains alleles of hetro variants 
     var_pos_blocks = []            # list of list. Outer list corresponds to phase block. Inner list contains genomic positions of hetro variants   
+
     
-    
-    lines_vcf_dic = {}            # key: var_pos  value: line (both het and homo) 
-    #line_number_het_list = []            # line number of hetrozygous variant. We need it for reporting improved version
+    line_number_het_list = []            # line number of phased hetrozygous variant. We need it for reporting improved version
 
     first_het_variant = True
-    #line_number=0
+    line_number = 0
+    
+    homozygous0_num = 0
+    homozygous1_num = 0
+    hetrozygous_nonphased = 0
+    hetrozygous_phased = 0
+    
+    
     for line in vcf_file:
         
-        #line_number += 1
+        line_number += 1
         
         line_strip=line.strip() 
         if line_strip.startswith('#'):
@@ -42,11 +67,7 @@ def read_vcf_file(vcf_file_address):
         else:
 
             line_parts=line_strip.split('\t') 
-            
-            
-            
-            
-            #var_lines_list.append(line_parts)
+            var_lines_list.append(line_parts)
 
             chrom = line_parts[0]
 
@@ -55,8 +76,6 @@ def read_vcf_file(vcf_file_address):
 
             var_pos = int(line_parts[1])                           # genomic position of variants
             var_pos_all.append(var_pos)
-            
-            lines_vcf_dic[var_pos]=line_parts
 
             
             format_genotype, values_genotype = line_parts[8:10]    # 'GT:GQ:DP:AF:GL:PS', '0|1:255:.:.:.,0,.:60780'
@@ -65,8 +84,6 @@ def read_vcf_file(vcf_file_address):
             format_genotype_splitted = format_genotype.split(':')
             
             gt_index = format_genotype_splitted.index("GT")           #  index of allele in  values_genotype 
-            ps_index = format_genotype_splitted.index("PS")           #  index of phase set in values_genotype 
-            
             
             allele = values_genotype_splitted[gt_index]
             
@@ -77,17 +94,27 @@ def read_vcf_file(vcf_file_address):
                 print("There is a vriant with genomic position "+str(var_pos)+" that is not genotyped. Remove it first.")
                 exit(1)
                 
-            elif '/' in allele:
-                print("There is a vriant with genomic position "+str(var_pos)+" that is not phased. Remove it first.")            
-                exit(1)
-                
-            elif (allele == '0|0' or allele == '1|1'):
-                # homozygous variant
-                pass
             
-            elif (allele == '0|1' or allele == '1|0'):
-                #line_number_het_list.append(line_number)
+            # if '/' in allele: print("There is a vriant with genomic position "+str(var_pos)+" that is not phased. Remove it first.")            
+
+            if allele == '0/1' or allele == '1/0':
+                hetrozygous_nonphased += 1
+
+            if allele == '0|0' or allele == '0/0':
+                homozygous0_num += 1
+                
+            if allele == '1|1' or allele == '1/1':
+                homozygous1_num += 1
+                    
+            if (allele == '0|1' or allele == '1|0'):
+            
+                hetrozygous_phased += 1
+                
+                line_number_het_list.append(line_number)
+                
+                ps_index = format_genotype_splitted.index("PS")           #  index of phase set in values_genotype 
                 id_block = values_genotype_splitted[ps_index]
+                
                 
                 
                 if first_het_variant:           # for the first het variant
@@ -116,14 +143,29 @@ def read_vcf_file(vcf_file_address):
     # # for the last het variant, we  finish the last block.
     allele_blocks.append(allele_block)
     var_pos_blocks.append(var_pos_block)
-                    
-            
+    
+    
+          
+    genomic_length_blocks = [] 
+    
+    for var_pos_block in var_pos_blocks:
+        genomic_length_blocks.append(var_pos_block[-1]-var_pos_block[0])
+        
+    values_sorted = sorted(genomic_length_blocks, reverse=True)
+    csum = np.cumsum(values_sorted)
+    
+    n2 = int(sum(values_sorted)/2)
+    csumn2 = min(csum[csum >= n2])
+    ind = np.where(csum == csumn2)
+    n50 = values_sorted[int(ind[0])]
+
+        
+    
+    stats_vcf = [homozygous0_num, homozygous1_num, hetrozygous_nonphased, hetrozygous_phased, genomic_length_blocks, n50]
 
 
 
-    #return header_lines_list, var_lines_list, var_pos_all, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks
-    return header_lines_list, lines_vcf_dic, var_pos_all, id_blocks, allele_blocks, var_pos_blocks
-
+    return header_lines_list, var_pos_all, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf
 
 
 
@@ -185,7 +227,7 @@ def read_file_mismatches(file_mismatches_address, id_blocks):
     comparison_result_blocks.append(comparison_result_block)
     
     if block_ids != id_blocks:
-        print("The block ids of phased VCF are not consitent with that of report file. The phased VCF file should be the same for all steps of code.\n")
+        print("The block ids of phased VCF are not consitent with that of report file. The phased VCF file should be the same in all steps of package.\n")
                 
             
                 
@@ -194,8 +236,26 @@ def read_file_mismatches(file_mismatches_address, id_blocks):
 
 
 def read_file_pairs_forward(file_pairs_address, var_pos_all):
+    
+    """
+    
+    Reading the pairs.txt file and save it in a dictinary only once.
 
-    # identical opposite
+    input: pairs.txt
+    Each line of input file has three part 
+        position of var1, position of  var2, realtion between phasing of var1 and that of var2
+        10 20 identical
+        
+        Each pair reports only one in output dictionary. We report the example for the key   20:[[10],[]]
+        Becuase, in phase block we go variant by vairant. So the phasing of previous variants are important not later's
+        
+    output: a dictinary, key: genomic position of variant, value: [[],[]] 
+    
+            first list: the genomic position of variant with identical phasing 
+            second list: the genomic position of variant with opposite phasing
+    
+    """
+    
     
     file_pairs = open(file_pairs_address,'r'); 
     
@@ -206,15 +266,11 @@ def read_file_pairs_forward(file_pairs_address, var_pos_all):
 
         
         
-        snv1_index = int(line_parts[0])
-        snv1_pos = var_pos_all[snv1_index-1]
-        allele1_snv1 = int(line_parts[1])
-        
-        snv2_index = int(line_parts[2])
-        snv2_pos = var_pos_all[snv2_index-1]
-        allele1_snv2 = int(line_parts[3])
-        
+        snv1_pos = int(line_parts[0]) 
+        snv2_pos = int(line_parts[1])                
 
+        relation_phasing = line_parts[2]
+        
         snvs_pos = [snv1_pos, snv2_pos]
         host_pos = max(snvs_pos)
         guest_pos = min(snvs_pos)
@@ -225,13 +281,12 @@ def read_file_pairs_forward(file_pairs_address, var_pos_all):
             # second list opposite phase
             pop_inf_dic[host_pos] = [[], []]
             
-        if allele1_snv1 == allele1_snv2:
+        if relation_phasing == 'identical':
             pop_inf_dic[host_pos][0].append(guest_pos)  
-        else:
+        elif relation_phasing == 'opposite':
             pop_inf_dic[host_pos][1].append(guest_pos) 
             
-    return pop_inf_dic
-
+    return pop_inf_dic  # [vars_identical_phase, vars_opposite_phase]=pop_inf_dic[var_pos]
 
 
 
@@ -239,7 +294,12 @@ def read_file_pairs_forward(file_pairs_address, var_pos_all):
 
 def read_file_pairs_forward_backward(file_pairs_address, var_pos_all):
 
-    # identical opposite
+    """
+    see read_file_pairs_forward
+    
+    The only difference is that a pair is reported twic. 
+    
+    """
     
     file_pairs = open(file_pairs_address,'r'); 
     
@@ -248,48 +308,44 @@ def read_file_pairs_forward_backward(file_pairs_address, var_pos_all):
         
         line_parts = line.strip().split('\t')     # ['42081', '0', '42096', '0']
 
-        
-        
-        snv1_index = int(line_parts[0])
-        snv1_pos = var_pos_all[snv1_index-1]
-        allele1_snv1 = int(line_parts[1])
-        
-        snv2_index = int(line_parts[2])
-        snv2_pos = var_pos_all[snv2_index-1]
-        allele1_snv2 = int(line_parts[3])
-          
+         
+        snv1_pos = int(line_parts[0]) 
+        snv2_pos = int(line_parts[1])                
+
+        relation_phasing = line_parts[2]
         
         host_pos = snv1_pos
         guest_pos = snv2_pos
         
         if host_pos not in pop_inf_dic.keys():
             
-            # first list identical phasing 
-            # second list opposite phasing 
+            # first list identical phase
+            # second list opposite phase
             pop_inf_dic[host_pos] = [[], []]
             
-        if allele1_snv1 == allele1_snv2:
+        if relation_phasing == 'identical':
             pop_inf_dic[host_pos][0].append(guest_pos)  
-        else:
+        elif relation_phasing == 'opposite':
             pop_inf_dic[host_pos][1].append(guest_pos) 
-            
-            
+   
             
         host_pos = snv2_pos
         guest_pos = snv1_pos
         
         if host_pos not in pop_inf_dic.keys():
             
-            # first list identical phasing 
-            # second list opposite phasing 
+            # first list identical phase
+            # second list opposite phase
             pop_inf_dic[host_pos] = [[], []]
             
-        if allele1_snv1 == allele1_snv2:
+        if relation_phasing == 'identical':
             pop_inf_dic[host_pos][0].append(guest_pos)  
-        else:
+        elif relation_phasing == 'opposite':
             pop_inf_dic[host_pos][1].append(guest_pos) 
             
-    return pop_inf_dic
+    return pop_inf_dic  # [vars_identical_phase, vars_opposite_phase]=pop_inf_dic[var_pos]
+
+      
 
 
 
@@ -297,7 +353,33 @@ def read_file_pairs_forward_backward(file_pairs_address, var_pos_all):
 def compare_phase_block_pop(allele_block, var_pos_block, pop_inf_dic, lower_bound, upper_bound):
 
     
-    # the results of comparison between sample (phased VCF) and pairs (the population information, pop_inf_dic)
+    """
+    Compare alleles of phased VCF with pairs (from the population information)
+    
+    input:  allele_block, var_pos_block    (phased VCF)
+            pop_inf_dic 
+    
+    output: a list of [[],[]] 
+    
+                        Inner list correspond to a variant (host). 
+                        first inner list: positons of variants that are matched with the host variant (based on population information)
+                                         the status of match can be either identical or opposite phasing.                
+                        second inner list mismatched
+    
+    
+    Exmpale 1:  pair from population information:  10 20 identical
+                if phased vcf   10 0|1    20 0|1, the 10 and 20 are matched.
+                if phased vcf   10 0|1    20 1|0, the 10 and 20 are mismatched.
+
+    Exmpale 2:  pair from population information:  10 20 opposite
+                if phased vcf   10 0|1    20 0|1, the 10 and 20 are mismatched.
+                if phased vcf   10 0|1    20 1|0, the 10 and 20 are matched.
+
+
+    """
+    
+    
+    # the results of comparison between 
     
     comparison_result_block = []
     for var_i in range(len(allele_block)):
@@ -305,9 +387,7 @@ def compare_phase_block_pop(allele_block, var_pos_block, pop_inf_dic, lower_boun
         #var_i is the index of variant within the block of phased vcf
 
         var_pos = var_pos_block[var_i]
-        allele=allele_block[var_i]
-
-
+        allele = allele_block[var_i]
 
         if var_pos >= lower_bound and  var_pos <= upper_bound:
 
@@ -317,12 +397,17 @@ def compare_phase_block_pop(allele_block, var_pos_block, pop_inf_dic, lower_boun
             #var_idx is the index of vriant globally in the VCF file 
             if var_pos in pop_inf_dic.keys():
     
-                [vars_identical_phase, vars_opposite_phase]=pop_inf_dic[var_pos]  
-                matched_identical_phase_list=[]
-                mismatched_identical_phase_list=[]
-                matched_opposite_phase_list=[]
-                mismatched_opposite_phase_list=[]
+                [vars_identical_phase, vars_opposite_phase] = pop_inf_dic[var_pos]  
+        
+                
+                matched_identical_phase_list = []
+                mismatched_identical_phase_list = []
+                matched_opposite_phase_list = []
+                mismatched_opposite_phase_list = []
                 #for sim_idx in vars_identical_phase: # sim shows the relation between two elements of a pop pair
+                
+                
+                # The differene between the two following for is the comparing the allele_var_guest and  allele (flliped)
                 
                 for var_pos_identical_phase in vars_identical_phase: # Those variant that have the same phasing with var_pos
 
@@ -353,19 +438,23 @@ def compare_phase_block_pop(allele_block, var_pos_block, pop_inf_dic, lower_boun
                         except:
                             pass                
                     
-                matched_list = matched_identical_phase_list+matched_opposite_phase_list
-                mismatched_list = mismatched_identical_phase_list + mismatched_identical_phase_list
+                matched_list = matched_identical_phase_list + matched_opposite_phase_list
+                mismatched_list = mismatched_identical_phase_list + mismatched_opposite_phase_list
                 
                 comparison_result = [matched_list, mismatched_list]
             else:
                 comparison_result = [[],[]]
-        else:    
+        else:
             comparison_result = [[],[]]
-        
+                
         comparison_result_block.append(comparison_result)
                 
         #print('comparison is done')
     return  comparison_result_block
+
+
+
+
 
 
 def decide_flip_cut(id_blocks, allele_blocks, var_pos_blocks, comparison_result_blocks):
@@ -378,6 +467,11 @@ def decide_flip_cut(id_blocks, allele_blocks, var_pos_blocks, comparison_result_
 
         allele_block = allele_blocks[block_i]       # hap_block
         var_pos_block = var_pos_blocks[block_i] 
+        
+        
+        # after deciding the cut, it is not applied, so the number of block is not changed.
+        # but after deciding the match/mismatch information is updated for those varaint afterwards and removed for previose since new block is started practically. 
+        
         comparison_result_block = comparison_result_blocks[block_i] # ont_pop_block
 
         
@@ -442,12 +536,12 @@ def decide_flip_cut(id_blocks, allele_blocks, var_pos_blocks, comparison_result_
                     lower_bound = var_pos
                     upper_bound = var_pos_block[-1]
                     
-
-
+                    # after deciding the cut, it is not applied, so the number of block is not changed.
+                    # but after deciding the match/mismatch information is updated for those varaint afterwards and removed for previose since new block is started practically. 
+        
                     comparison_result_block = compare_phase_block_pop(allele_block, var_pos_block, pop_inf_dic, lower_bound, upper_bound)
         cut_list_blocks.append(cut_list_block)
     return flip_list, cut_list_blocks             
-
 
 
 
@@ -591,19 +685,19 @@ if __name__ == "__main__":
     """
 
 
-    chrom_output=19
-    vcf_file_address = 'data/'+str(chrom_output)+'/10k_out.vcf' #tst.vcf' #
+    chrom_output = 22
+    vcf_file_address = 'data/'+str(chrom_output)+'/a22_10k.vcf' #tst.vcf' #
+    
+    # header_lines_list, lines_vcf_dic, var_pos_all, id_blocks, allele_blocks, var_pos_blocks  = read_vcf_file(vcf_file_address)
+    
+    header_lines_list, var_pos_all, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf  =  read_vcf_file(vcf_file_address)
 
-    #hap_blocks, idc_blocks, var_pos_list, phased_vcf_dic, header_lines_list = read_vcf_file(vcf_file_address)
-    #header_lines_list, var_lines_list, var_pos_all, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks = read_vcf_file(vcf_file_address)
-    header_lines_list, lines_vcf_dic, var_pos_all, id_blocks, allele_blocks, var_pos_blocks  = read_vcf_file(vcf_file_address)
-    
-    
-    file_mismatches_address='data/'+str(chrom_output)+'/10k_'+str(chrom_output)+'_report_mismatches.txt'
 
-    comparison_result_blocks=read_file_mismatches(file_mismatches_address, id_blocks)
     
-    file_pairs_address='data/'+str(chrom_output)+'/10k_pairs.txt'
+    file_mismatches_address = 'data/'+str(chrom_output)+'/'+str(chrom_output)+'_report_mismatches.txt'
+    comparison_result_blocks = read_file_mismatches(file_mismatches_address, id_blocks)
+    
+    file_pairs_address='data/'+str(chrom_output)+'/pairs_500_10k.txt'
     pop_inf_dic=read_file_pairs_forward(file_pairs_address, var_pos_all) #_backward for reporting both
     
 
@@ -616,6 +710,6 @@ if __name__ == "__main__":
 
     write_out_vcf(vcf_file_improved_address, lines_vcf_dic_improved_cut, header_lines_list )
     
-#     phased_vcf_dic_improved2 = improve_vcf_cut(phased_vcf_dic_improved, hap_blocks, cut_dic)
-#     write_out_vcf(phased_vcf_dic_improved2, vcf_file_improved_address)
+    phased_vcf_dic_improved2 = improve_vcf_cut(phased_vcf_dic_improved, hap_blocks, cut_dic)
+    write_out_vcf(phased_vcf_dic_improved2, vcf_file_improved_address)
 
