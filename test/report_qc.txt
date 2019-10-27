@@ -1,0 +1,38 @@
+Quality report for chromosome 22:
+ 
+Number of homozygous variants is 29615, including 9506 variants with 0|0 and 20109 variants with 1|1:.
+Number of non-phased heterozygous variants is 30113.
+Number of heterozygous variants in all blocks is 42107.
+
+N50 of phase blocks is 29753274.
+
+Phase block 0:
+The phase block spans 625950 bases.
+The genomic position of first variant of the phase block is 16052419.
+Quality of block is 0.97464.
+Number of variants in the phase block is 1455.
+
+Phase block 1:
+The phase block spans 1864218 bases.
+The genomic position of first variant of the phase block is 16847870.
+Quality of block is 0.98206.
+Number of variants in the phase block is 3826.
+
+Phase block 2:
+The phase block spans 1795452 bases.
+The genomic position of first variant of the phase block is 18712732.
+Quality of block is 0.99821.
+Number of variants in the phase block is 3667.
+
+Phase block 3:
+The phase block spans 29753274 bases.
+The genomic position of first variant of the phase block is 20610824.
+Quality of block is 0.96552.
+Number of variants in the phase block is 32038.
+
+Phase block 4:
+The phase block spans 828525 bases.
+The genomic position of first variant of the phase block is 50415657.
+Quality of block: There is no population information for this block.
+Number of variants in the phase block is 1121.
+
