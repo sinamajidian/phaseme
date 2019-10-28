@@ -26,8 +26,9 @@ python population.py input_vcf /path/to/1000G
 ## Step 2: Run PhaseMe to obtain stats and improve the quality of phase blocks
 
 ```
-python utilities/qc.py out.vcf pairs.txt
-python utilities/improver.py out.vcf report.txt
+python utilities/qc.py
+
+python utilities/improver.py
 ```
 
 
