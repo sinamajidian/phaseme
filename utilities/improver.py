@@ -726,7 +726,7 @@ if __name__ == "__main__":
     
     lines_list_improved_cut= improve_vcf_cut(lines_list_improved_flipping, id_blocks, cut_list_blocks, var_pos_blocks)
 
-    vcf_file_improved_address = ''+str(chrom)+'_ont_10x_improved.vcf' 
+    vcf_file_improved_address = ''+str(chrom)+'_ont_improved.vcf' 
     write_out_vcf(vcf_file_improved_address, lines_list_improved_cut)
     
 
