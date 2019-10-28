@@ -3,7 +3,7 @@
 
 
 
-
+from sys import argv
 import numpy as np
 
 
@@ -547,8 +547,6 @@ def report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vc
 
 
 
-
-
 if __name__ == "__main__":
 
     
@@ -570,13 +568,13 @@ if __name__ == "__main__":
     #header_lines_list, var_pos_all, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf = read_vcf_file_with10x(vcf_file_address)
 
     
-    vcf_file_address = 'data/'+str(chrom_output)+'/ont_10x_22_ont.vcf' #tst.vcf' #
+    vcf_file_address = argv[1]            #'input/'+str(chrom_output)+'_ont_10x.vcf' #tst.vcf' #
     header_lines_list, var_pos_all, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, allele_10x_dic = read_vcf_file_with10x(vcf_file_address)
 
 
-    file_pairs_address='data/'+str(chrom_output)+'/pairs_500_10k.txt'
-    pop_inf_dic=read_file_pairs_forward(file_pairs_address, var_pos_all) #_backward for reporting both
-    #pop_inf_dic=read_file_pairs_forward_backward(file_pairs_address, var_pos_all) #_backward for reporting both
+    file_pairs_address= argv[2]          #'input/'+str(chrom_output)+'_pairs.txt'
+    #pop_inf_dic=read_file_pairs_forward(file_pairs_address, var_pos_all) #_backward for reporting both
+    pop_inf_dic=read_file_pairs_forward_backward(file_pairs_address, var_pos_all) #_backward for reporting both
 
     
     #print(len(pop_inf_dic))
@@ -601,12 +599,13 @@ if __name__ == "__main__":
 
         
         
-    report_out_address='data/'+str(chrom_output)+'/'+str(chrom_output)+'_report_mismatches.txt' 
+    report_out_address=''+str(chrom_output)+'_report_mismatches.txt' 
     qual_blocks = report_comparison_with10x(report_out_address, comparison_result_blocks, chrom_output, allele_10x_dic)
         
-
-    report_qc_address='data/'+str(chrom_output)+'/'+str(chrom_output)+'_report_qc.txt' #
+    report_qc_address=''+str(chrom_output)+'/'+str(chrom_output)+'_report_qc.txt' #
     report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf)
 
   
+
+
 
