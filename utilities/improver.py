@@ -2,24 +2,23 @@
 
 
 import numpy as np
-
+from sys import argv
 
 
 
 tresh_match_mismatch= 1.1
     
     
-    
-def read_vcf_file(vcf_file_address):
-    
+
+def read_vcf_file_with10x(vcf_file_address):    
     
     """
     Reading the vcf file
     
     input: vcf file
     outputs: 
-            header_lines_list: list of string. each string is a line that starts with #.
-            var_pos_all: genomic position of all variants in the vcf file. 
+            lines_list: list of string. each string is a line of phased vcf file.
+            var_pos_het_list: genomic position of phased hetrozygous variants in the vcf file. 
             line_number_het_list: list of line numbers in the vcf file that are phased hetrozygous variant (needed in phasing)
             id_blocks: list of ids of phas blocks
             allele_blocks: list of list
@@ -31,12 +30,13 @@ def read_vcf_file(vcf_file_address):
     
     
     
+    
+    allele_10x_dic = {}
+    
     vcf_file = open(vcf_file_address,'r')
 
-    header_lines_list=[]           # header lines  
-    var_lines_list=[]              # needed for reporting improved VCF containing all lines except header.  (both homo and hetro) 
-    
-    var_pos_all=[]                # position of variants all blocks consequently. It can be used for converting variant index to genomic position (in pairs.txt)
+    lines_list=[]                      #  lines  of phased vcf.  needed for reporting improved VCF 
+    var_pos_het_list=[]                # position of phased hetrozygous variants all blocks consequently. 
 
     # The followings are for phased hetrozygous variants.
     id_blocks = []                 # list of list. Outer list corresponds to phase block. Inner list contains block_id
@@ -46,7 +46,7 @@ def read_vcf_file(vcf_file_address):
 
     
     line_number_het_list = []            # line number of phased hetrozygous variant. We need it for reporting improved version
-
+    
     first_het_variant = True
     line_number = 0
     
@@ -60,14 +60,17 @@ def read_vcf_file(vcf_file_address):
         
         line_number += 1
         
-        line_strip=line.strip() 
+        line_strip = line.strip() 
+        
+        lines_list.append(line_strip)
+        
         if line_strip.startswith('#'):
-            header_lines_list.append(line_strip)
-            #sample_names=line_strip.split('\t')[9:11]            # last line of header contains sample name
+            pass 
+            #header_lines_list.append(line_strip)
+            #sample_names = line_strip.split('\t')[9:11]            # last line of header contains sample name
         else:
 
-            line_parts=line_strip.split('\t') 
-            var_lines_list.append(line_parts)
+            line_parts = line_strip.split('\t') 
 
             chrom = line_parts[0]
 
@@ -75,7 +78,7 @@ def read_vcf_file(vcf_file_address):
                 print(chrom_output,chrom)
 
             var_pos = int(line_parts[1])                           # genomic position of variants
-            var_pos_all.append(var_pos)
+            
 
             
             format_genotype, values_genotype = line_parts[8:10]    # 'GT:GQ:DP:AF:GL:PS', '0|1:255:.:.:.,0,.:60780'
@@ -110,6 +113,8 @@ def read_vcf_file(vcf_file_address):
             
                 hetrozygous_phased += 1
                 
+                var_pos_het_list.append(var_pos)
+                
                 line_number_het_list.append(line_number)
                 
                 ps_index = format_genotype_splitted.index("PS")           #  index of phase set in values_genotype 
@@ -123,6 +128,7 @@ def read_vcf_file(vcf_file_address):
                     allele_block = [allele]
                     var_pos_block = [int(var_pos)]
                     id_blocks.append(id_block)
+                    
                     
                 else:                              # for the rest of het variants
                     if id_block in id_blocks:
@@ -139,7 +145,20 @@ def read_vcf_file(vcf_file_address):
                         allele_block = [allele]
                         var_pos_block = [int(var_pos)]
                         id_blocks.append(id_block)
-                
+    
+    
+    
+
+                values_genotype_10x = line_parts[10]
+                values_genotype_10x_splitted = values_genotype_10x.split(':')
+                allele_10x = values_genotype_10x_splitted[gt_index]
+                id_block_10x = values_genotype_10x_splitted[ps_index]
+                if allele_10x != './.':
+                    allele_10x_dic[var_pos]= str(id_block_10x)+':'+str(allele_10x)
+    
+    
+    
+    
     # # for the last het variant, we  finish the last block.
     allele_blocks.append(allele_block)
     var_pos_blocks.append(var_pos_block)
@@ -165,12 +184,13 @@ def read_vcf_file(vcf_file_address):
 
 
 
-    return header_lines_list, var_pos_all, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf
+    return lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, allele_10x_dic
 
 
 
 
-def read_file_mismatches(file_mismatches_address, id_blocks):
+#def read_file_mismatches(file_mismatches_address, id_blocks):
+def read_file_mismatches_with10x(file_mismatches_address, id_blocks):
 
     file = open(file_mismatches_address,'r')
         
@@ -195,7 +215,9 @@ def read_file_mismatches(file_mismatches_address, id_blocks):
             
             first_variant=False
             
-            line_parts = line.strip().split('\t')     # ['42081', '0', '42096', '0']
+            line_parts_with10x = line.strip().split('\t')     # ['42081', '0', '42096', '0']
+            
+            line_parts = line_parts_with10x[2:]
             
             chrom = line_parts[0]
             var_pos = int(line_parts[1])
@@ -235,7 +257,7 @@ def read_file_mismatches(file_mismatches_address, id_blocks):
     return comparison_result_blocks
 
 
-def read_file_pairs_forward(file_pairs_address, var_pos_all):
+def read_file_pairs_forward(file_pairs_address):
     
     """
     
@@ -292,7 +314,7 @@ def read_file_pairs_forward(file_pairs_address, var_pos_all):
 
 
 
-def read_file_pairs_forward_backward(file_pairs_address, var_pos_all):
+def read_file_pairs_forward_backward(file_pairs_address):
 
     """
     see read_file_pairs_forward
@@ -456,12 +478,10 @@ def compare_phase_block_pop(allele_block, var_pos_block, pop_inf_dic, lower_boun
 
 
 
-
 def decide_flip_cut(id_blocks, allele_blocks, var_pos_blocks, comparison_result_blocks):
-
-
-    flip_list=[]
-    cut_list_blocks=[]
+    
+    flip_list = []
+    cut_list_blocks = []
 
     for block_i, block_id  in enumerate(id_blocks):
 
@@ -484,51 +504,44 @@ def decide_flip_cut(id_blocks, allele_blocks, var_pos_blocks, comparison_result_
 
             
             
-            comparison_result = comparison_result_block[var_i]  # after a cut, it may use a newer version of this vsrisble
-            if comparison_result == [[],[]]:
+            comparison_result = comparison_result_block[var_i]  # rightafter we decide a cut, we use an updated version of comparison_result_block
+
+            if comparison_result == [[],[]]:  # there is no population information for this variant
                 out_pairs = '.'
+                
             else:
                 [matched_list, mismatched_list] = comparison_result    
                 
                 num_mismatched = len(mismatched_list)
                 num_matched = len(matched_list)
                 
-                condition = 0
+                condition_flip_cut = 0
                 condition_flip = 0
                 condition_cut = 0
                 
                 if num_mismatched >= 2:
-                    if num_matched == 0:
-                        condition = 1
-                        
-                    elif num_matched/num_mismatched < tresh_match_mismatch :
-                        condition=1
-                        
-                if condition:
+
+                    [matched_next1, mismatched_next1] = comparison_result_block[var_i+1]
+                    [matched_next2, mismatched_next2] = comparison_result_block[var_i+2]
+
+                    num_matched_next1 = len(matched_next1)
+                    num_mismatched_next1 = len(mismatched_next1)
                     
-                    #print(len_mismatched_list, var_pos)
-#                     ont_pop_prev = ont_pop_block[var_idx-1] 
-#                     ont_pop_nex = ont_pop_block[var_idx+1] 
-                    comparison_result_next_var = comparison_result_block[var_i+1]
+                    
+                    if num_matched == 0 or num_matched/num_mismatched < tresh_match_mismatch:
+                        if num_mismatched_next1 >=1 and (num_matched_next1 == 0 or num_matched_next1/num_mismatched_next1 < tresh_match_mismatch):
+                            condition_cut = 1
+                    
+                    if var_pos in mismatched_next1 and var_pos in mismatched_next2:
+                        condition_flip = 1
 
-                    num_matched_next = len(comparison_result_next_var[0])
-                    num_mismatched_next = len(comparison_result_next_var[1])
-#                     len_match_list_prev = len(ont_pop_prev[0])
-#                     len_mismatch_list_prev = len(ont_pop_prev[1])
-
-                    if num_matched_next>1.3*num_mismatched_next: #and len_match_list_prev>1.3*len_mismatch_list_prev: #  ?? if no pop information in last var
-                        condition_flip=1
-#                     if len_match_list_prev==0:
-                    if  num_mismatched_next>=2:
-                        condition_cut=1
-
-
+                        
                 if condition_flip:
                     print('flip candidate', var_pos)
                     flip_list.append(var_pos)
                     
                 if condition_cut and not condition_flip:
-                    cut_pos = var_pos # cut_pos the starting position of new block
+                    cut_pos = var_pos                 # cut_pos the starting position of new block
                     print('cut candidate', cut_pos) 
                     
                     cut_list_block.append(var_pos)
@@ -545,14 +558,24 @@ def decide_flip_cut(id_blocks, allele_blocks, var_pos_blocks, comparison_result_
 
 
 
-def improve_vcf_flip(lines_vcf_dic, flip_list):
 
 
-    lines_vcf_dic_improved_flipping = lines_vcf_dic
+def improve_vcf_flip(lines_list, line_number_het_list, flip_list):
     
-    for var_pos in flip_list:
+    
+    # becareful about the concpet of deep copy. the change will affect the lines_list
+    lines_list_improved_flipping = lines_list
+    
+    for var_pos_flip in flip_list:
         
-        line_parts=lines_vcf_dic[var_pos]
+       
+        var_index_flip = var_pos_het_list.index(var_pos_flip)
+        
+        var_line_number_flip = line_number_het_list[var_index_flip]    # 1-based line number 
+                
+        line = lines_list[var_line_number_flip-1]                      # 0-based  list
+
+        line_parts = line.split('\t')
 
         format_genotype, values_genotype = line_parts[8:10]    # 'GT:GQ:DP:AF:GL:PS', '0|1:255:.:.:.,0,.:60780'
 
@@ -562,27 +585,25 @@ def improve_vcf_flip(lines_vcf_dic, flip_list):
         gt_index = format_genotype_splitted.index("GT")           #  index of allele in  values_genotype 
         allele = values_genotype_splitted[gt_index]
         
+        allele_flipped = str(1-int(allele[0]))+'|'+str(1-int(allele[2]))
+        values_genotype_splitted[gt_index] = allele_flipped
         
-        allele_flipped=str(1-int(allele[0]))+'|'+str(1-int(allele[2]))
+        line_parts[9]=':'.join(values_genotype_splitted)
         
-        values_genotype_splitted=values_genotype.split(':')
-        values_genotype_splitted[gt_index]=allele_flipped
+        line = '\t'.join(line_parts)
         
-        line_parts_flipped=line_parts
-        
-        line_parts_flipped[9]=':'.join(values_genotype_splitted)
-        
-        
-        lines_vcf_dic_improved_flipping[var_pos]=line_parts_flipped
-    
-    return lines_vcf_dic_improved_flipping  
-    
-    
-
-def improve_vcf_cut(lines_vcf_dic_improved_flipping, id_blocks, cut_list_blocks, var_pos_blocks):
+        lines_list_improved_flipping[var_line_number_flip-1] = line
 
 
-    # allele_blocks
+        
+    return lines_list_improved_flipping  
+   
+    
+
+
+def improve_vcf_cut(lines_list_improved_flipping, id_blocks, cut_list_blocks, var_pos_blocks):
+
+
     var_blockid_dic_updated = {}   # key: var_pos (genomic position of variant) value: block_id   after enforcing cuts!
     
     
@@ -607,68 +628,57 @@ def improve_vcf_cut(lines_vcf_dic_improved_flipping, id_blocks, cut_list_blocks,
         # for last variant in the block
         var_blockid_dic_updated[boundries_list[i]] = str(boundries_list[i-1])
         
+    
+    lines_list_improved_cut = lines_list_improved_flipping
 
-    lines_vcf_dic_improved_cut = lines_vcf_dic_improved_flipping
-
-    sorted_var_pos = sorted(lines_vcf_dic_improved_cut.keys())
-    for var_pos in sorted_var_pos: 
+    for var_i in range(len(var_pos_het_list)): 
         
-        line_parts = lines_vcf_dic_improved_cut[var_pos]
+        var_pos = var_pos_het_list[var_i]
+        line_number = line_number_het_list[var_i]   # 1-based line number 
+         
+        line = lines_list_improved_cut[line_number-1]            # 0-based  list
+         
+        line_parts = line.split('\t')
 
         format_genotype, values_genotype = line_parts[8:10]    # 'GT:GQ:DP:AF:GL:PS', '0|1:255:.:.:.,0,.:60780'
+
         values_genotype_splitted = values_genotype.split(':')
         format_genotype_splitted = format_genotype.split(':')
 
-        gt_index = format_genotype_splitted.index("GT")           #  index of allele in  values_genotype 
+        gt_index = format_genotype_splitted.index("GT")           #  index of allele in  values_genotype
         ps_index = format_genotype_splitted.index("PS")
 
-        
         allele = values_genotype_splitted[gt_index]
-        
-        if (allele == '0|1' or allele == '1|0'):
 
-            id_block = values_genotype_splitted[ps_index]
+        block_id_updated = var_blockid_dic_updated[var_pos]
 
-            block_id_updated = var_blockid_dic_updated[var_pos]
+        values_genotype_splitted[ps_index] = block_id_updated
 
-            values_genotype_splitted_updated = values_genotype.split(':')
-            values_genotype_splitted_updated[ps_index] = block_id_updated
+        line_parts[9] = ':'.join(values_genotype_splitted)
 
-            line_parts_updated = line_parts
-            line_parts_updated[9] = ':'.join(values_genotype_splitted_updated)
-
-            lines_vcf_dic_improved_cut[var_pos] = line_parts_updated
+        lines_list_improved_cut[line_number-1]  = '\t'.join(line_parts)
 
 
-    return lines_vcf_dic_improved_cut
+    return lines_list_improved_cut
 
 
+    
 
+    
+    
+def write_out_vcf(lines_list, lines_list_improved_cut):
 
-def write_out_vcf(vcf_file_improved_address, lines_vcf_dic_improved_cut, header_lines_list ):
-
-
-    # reading phased VCF file,  use grep before that, only 0|1 or 1|0. bi -allelic
     vcf_file_improved = open(vcf_file_improved_address,'w');  # phased_vcf_dic
 
-    sorted_var_pos=sorted(lines_vcf_dic_improved_cut.keys())
-
-    for header_line in header_lines_list:
+    for header_line in lines_list_improved_cut:
         vcf_file_improved.write(header_line+'\n')
         
-    for var_pos in sorted_var_pos: 
-        
-        line_parts=lines_vcf_dic_improved_cut[var_pos]
-        vcf_file_improved.write('\t'.join(line_parts)+'\n')
-        
+
     vcf_file_improved.close()
     
     return 1 
 
 
-
-
-    
 
 
 
@@ -686,30 +696,35 @@ if __name__ == "__main__":
 
 
     chrom_output = 22
-    vcf_file_address = 'data/'+str(chrom_output)+'/a22_10k.vcf' #tst.vcf' #
-    
-    # header_lines_list, lines_vcf_dic, var_pos_all, id_blocks, allele_blocks, var_pos_blocks  = read_vcf_file(vcf_file_address)
-    
-    header_lines_list, var_pos_all, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf  =  read_vcf_file(vcf_file_address)
+    vcf_file_address = 'uploaded_dropbox/input/'+str(chrom_output)+'_ont_10x.vcf' #tst.vcf' #
+        
+    lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, allele_10x_dic  =  read_vcf_file_with10x(vcf_file_address)
 
 
     
-    file_mismatches_address = 'data/'+str(chrom_output)+'/'+str(chrom_output)+'_report_mismatches.txt'
-    comparison_result_blocks = read_file_mismatches(file_mismatches_address, id_blocks)
+    #file_mismatches_address = 'uploaded_dropbox/'+str(chrom_output)+'_report_mismatches.txt'
+    file_mismatches_address = 'uploaded_dropbox/22_report_mismatches_onlyforward.txt'
+    comparison_result_blocks = read_file_mismatches_with10x(file_mismatches_address, id_blocks)
     
-    file_pairs_address='data/'+str(chrom_output)+'/pairs_500_10k.txt'
-    pop_inf_dic=read_file_pairs_forward(file_pairs_address, var_pos_all) #_backward for reporting both
+    file_pairs_address = 'uploaded_dropbox/input/'+str(chrom_output)+'_pairs.txt'
+    pop_inf_dic = read_file_pairs_forward(file_pairs_address, var_pos_het_list) #_backward for reporting both
     
 
     flip_list, cut_list_blocks = decide_flip_cut(id_blocks, allele_blocks, var_pos_blocks, comparison_result_blocks)
 
-    lines_vcf_dic_improved_flipping = improve_vcf_flip(lines_vcf_dic, flip_list)  # it may contain homo vars
     
-    lines_vcf_dic_improved_cut = improve_vcf_cut(lines_vcf_dic_improved_flipping, id_blocks, cut_list_blocks, var_pos_blocks)
-    vcf_file_improved_address = 'data/'+str(chrom_output)+'/10k_improved_'+str(tresh_match_mismatch)+'.vcf' #tst.vcf' #
+    
+    # becareful about the concpet of deep copy.  Changes will affect the lines_list
+    lines_list_improved_flipping = improve_vcf_flip(lines_list, line_number_het_list, flip_list)  # it may contain homo vars
+    
+    
+    
+    lines_list_improved_cut= improve_vcf_cut(lines_list_improved_flipping, id_blocks, cut_list_blocks, var_pos_blocks)
 
-    write_out_vcf(vcf_file_improved_address, lines_vcf_dic_improved_cut, header_lines_list )
+    vcf_file_improved_address = 'uploaded_dropbox/input/'+str(chrom_output)+'_ont_10x_improved.vcf' 
+
+    write_out_vcf(vcf_file_improved_address, lines_list_improved_cut)
     
-    phased_vcf_dic_improved2 = improve_vcf_cut(phased_vcf_dic_improved, hap_blocks, cut_dic)
-    write_out_vcf(phased_vcf_dic_improved2, vcf_file_improved_address)
+
+
 
