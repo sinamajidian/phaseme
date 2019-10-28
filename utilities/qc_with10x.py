@@ -8,16 +8,15 @@ import numpy as np
 
 
 
-def read_vcf_file_with10x(vcf_file_address):
-    
+def read_vcf_file_with10x(vcf_file_address):    
     
     """
     Reading the vcf file
     
     input: vcf file
     outputs: 
-            header_lines_list: list of string. each string is a line that starts with #.
-            var_pos_all: genomic position of all variants in the vcf file. 
+            lines_list: list of string. each string is a line of phased vcf file.
+            var_pos_het_list: genomic position of phased hetrozygous variants in the vcf file. 
             line_number_het_list: list of line numbers in the vcf file that are phased hetrozygous variant (needed in phasing)
             id_blocks: list of ids of phas blocks
             allele_blocks: list of list
@@ -34,10 +33,8 @@ def read_vcf_file_with10x(vcf_file_address):
     
     vcf_file = open(vcf_file_address,'r')
 
-    header_lines_list=[]           # header lines  
-    var_lines_list=[]              # needed for reporting improved VCF containing all lines except header.  (both homo and hetro) 
-    
-    var_pos_all=[]                # position of variants all blocks consequently. It can be used for converting variant index to genomic position (in pairs.txt)
+    lines_list=[]                  #  lines  of phased vcf  needed for reporting improved VCF 
+    var_pos_het_list=[]                # position of phased hetrozygous variants all blocks consequently. 
 
     # The followings are for phased hetrozygous variants.
     id_blocks = []                 # list of list. Outer list corresponds to phase block. Inner list contains block_id
@@ -47,7 +44,8 @@ def read_vcf_file_with10x(vcf_file_address):
 
     
     line_number_het_list = []            # line number of phased hetrozygous variant. We need it for reporting improved version
-
+    lines_list = []
+    
     first_het_variant = True
     line_number = 0
     
@@ -61,14 +59,17 @@ def read_vcf_file_with10x(vcf_file_address):
         
         line_number += 1
         
-        line_strip=line.strip() 
+        line_strip = line.strip() 
+        
+        lines_list.append(line_strip)
+        
         if line_strip.startswith('#'):
-            header_lines_list.append(line_strip)
-            #sample_names=line_strip.split('\t')[9:11]            # last line of header contains sample name
+            pass 
+            #header_lines_list.append(line_strip)
+            #sample_names = line_strip.split('\t')[9:11]            # last line of header contains sample name
         else:
 
             line_parts=line_strip.split('\t') 
-            var_lines_list.append(line_parts)
 
             chrom = line_parts[0]
 
@@ -76,7 +77,7 @@ def read_vcf_file_with10x(vcf_file_address):
                 print(chrom_output,chrom)
 
             var_pos = int(line_parts[1])                           # genomic position of variants
-            var_pos_all.append(var_pos)
+            
 
             
             format_genotype, values_genotype = line_parts[8:10]    # 'GT:GQ:DP:AF:GL:PS', '0|1:255:.:.:.,0,.:60780'
@@ -110,6 +111,8 @@ def read_vcf_file_with10x(vcf_file_address):
             if (allele == '0|1' or allele == '1|0'):
             
                 hetrozygous_phased += 1
+                
+                var_pos_het_list.append(var_pos)
                 
                 line_number_het_list.append(line_number)
                 
@@ -180,10 +183,10 @@ def read_vcf_file_with10x(vcf_file_address):
 
 
 
-    return header_lines_list, var_pos_all, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, allele_10x_dic
+    return lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, allele_10x_dic
 
 
-def read_file_pairs_forward(file_pairs_address, var_pos_all):
+def read_file_pairs_forward(file_pairs_address):
     
     """
     
@@ -240,7 +243,7 @@ def read_file_pairs_forward(file_pairs_address, var_pos_all):
 
 
 
-def read_file_pairs_forward_backward(file_pairs_address, var_pos_all):
+def read_file_pairs_forward_backward(file_pairs_address):
 
     """
     see read_file_pairs_forward
@@ -414,9 +417,7 @@ def report_comparison_with10x(report_out_address, comparison_result_blocks, chro
         allele_block = allele_blocks[block_i]
         var_pos_block = var_pos_blocks[block_i]
         
-        
-        # header_lines_list, var_pos_all, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks
-        
+                
     
         file_report.write('\t'.join(["#Phase Block with ID  ",str(block_id)])+"\n")
 
@@ -446,7 +447,7 @@ def report_comparison_with10x(report_out_address, comparison_result_blocks, chro
                 
                 
             else:
-                list_write.append('.\t')
+                list_write.append('.')
                 list_write.append('.')
                 
                 
@@ -563,25 +564,31 @@ if __name__ == "__main__":
     """
 
 
-    chrom_output=22
-    #vcf_file_address = 'data/'+str(chrom_output)+'/a22_10k.vcf' #tst.vcf' #
-    #header_lines_list, var_pos_all, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf = read_vcf_file_with10x(vcf_file_address)
+    chrom_output = 22
+    
+    vcf_file_address = 'input/'+str(chrom_output)+'_ont_10x.vcf' 
+    #vcf_file_address = argv[1]
+    
+    lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, allele_10x_dic = read_vcf_file_with10x(vcf_file_address)
+
+
+    file_pairs_address= 'input/'+str(chrom_output)+'_pairs.txt'
+    #file_pairs_address= argv[2]
+    
+    
+    
+    Forward_or_both = 'both'
+    
+    if Forward_or_both == 'forward':
+        pop_inf_dic = read_file_pairs_forward(file_pairs_address)         
+        
+    if Forward_or_both == 'both':                       # reproting pairs both forward and backward
+        pop_inf_dic = read_file_pairs_forward_backward(file_pairs_address)      
 
     
-    vcf_file_address = argv[1]            #'input/'+str(chrom_output)+'_ont_10x.vcf' #tst.vcf' #
-    header_lines_list, var_pos_all, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, allele_10x_dic = read_vcf_file_with10x(vcf_file_address)
-
-
-    file_pairs_address= argv[2]          #'input/'+str(chrom_output)+'_pairs.txt'
-    #pop_inf_dic=read_file_pairs_forward(file_pairs_address, var_pos_all) #_backward for reporting both
-    pop_inf_dic=read_file_pairs_forward_backward(file_pairs_address, var_pos_all) #_backward for reporting both
 
     
-    #print(len(pop_inf_dic))
-    print('number of blocks in ont',len(allele_blocks))
-
     # comparing input phased vcf (hap_blocks_sample1_dic) with pop (short_blocks_dic_pos)
-
     comparison_result_blocks=[]
     for block_i in range(len(id_blocks)):
         
@@ -599,13 +606,15 @@ if __name__ == "__main__":
 
         
         
-    report_out_address=''+str(chrom_output)+'_report_mismatches.txt' 
+    report_out_address=''+str(chrom_output)+'_report_mismatches_'+Forward_or_both+'.txt'
     qual_blocks = report_comparison_with10x(report_out_address, comparison_result_blocks, chrom_output, allele_10x_dic)
         
-    report_qc_address=''+str(chrom_output)+'_report_qc.txt'
+    report_qc_address=''+str(chrom_output)+'_report_qc_'+Forward_or_both+'.txt'
     report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf)
 
   
+
+
 
 
 

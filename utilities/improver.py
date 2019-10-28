@@ -74,8 +74,8 @@ def read_vcf_file_with10x(vcf_file_address):
 
             chrom = line_parts[0]
 
-            if str(chrom_output)!=chrom:
-                print(chrom_output,chrom)
+            #if str(chrom_output)!=chrom:
+                #print(chrom_output,chrom)
 
             var_pos = int(line_parts[1])                           # genomic position of variants
             
@@ -681,7 +681,6 @@ def write_out_vcf(lines_list, lines_list_improved_cut):
 
 
 
-
 if __name__ == "__main__":
 
     
@@ -695,36 +694,40 @@ if __name__ == "__main__":
     """
 
 
-    chrom_output = 22
-    vcf_file_address = 'uploaded_dropbox/input/'+str(chrom_output)+'_ont_10x.vcf' #tst.vcf' #
-        
+    chrom = 22
+    vcf_file_address = 'input/'+str(chrom)+'_ont_10x.vcf'
+    file_mismatches_address = 'Expected_output/'+str(chrom)+'_report_mismatches_forward.txt'
+    file_pairs_address = 'input/'+str(chrom)+'_pairs.txt'
+
+
+
+                
     lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, allele_10x_dic  =  read_vcf_file_with10x(vcf_file_address)
 
-
-    
-    #file_mismatches_address = 'uploaded_dropbox/'+str(chrom_output)+'_report_mismatches.txt'
-    file_mismatches_address = 'uploaded_dropbox/22_report_mismatches_onlyforward.txt'
     comparison_result_blocks = read_file_mismatches_with10x(file_mismatches_address, id_blocks)
     
-    file_pairs_address = 'uploaded_dropbox/input/'+str(chrom_output)+'_pairs.txt'
-    pop_inf_dic = read_file_pairs_forward(file_pairs_address, var_pos_het_list) #_backward for reporting both
     
+    
+    Forward_or_both = 'forward'
+    
+    if Forward_or_both == 'forward':
+        pop_inf_dic = read_file_pairs_forward(file_pairs_address)         
+        
+    if Forward_or_both == 'both':                       # reproting pairs both forward and backward
+        pop_inf_dic = read_file_pairs_forward_backward(file_pairs_address)    
+        
+        
 
     flip_list, cut_list_blocks = decide_flip_cut(id_blocks, allele_blocks, var_pos_blocks, comparison_result_blocks)
 
-    
-    
-    # becareful about the concpet of deep copy.  Changes will affect the lines_list
+    # becareful about the concpet of deep copy.  Changes may affect the lines_list
     lines_list_improved_flipping = improve_vcf_flip(lines_list, line_number_het_list, flip_list)  # it may contain homo vars
-    
     
     
     lines_list_improved_cut= improve_vcf_cut(lines_list_improved_flipping, id_blocks, cut_list_blocks, var_pos_blocks)
 
-    vcf_file_improved_address = 'uploaded_dropbox/input/'+str(chrom_output)+'_ont_10x_improved.vcf' 
-
+    vcf_file_improved_address = ''+str(chrom)+'_ont_10x_improved.vcf' 
     write_out_vcf(vcf_file_improved_address, lines_list_improved_cut)
     
-
 
 
