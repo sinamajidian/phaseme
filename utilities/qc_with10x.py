@@ -602,7 +602,7 @@ if __name__ == "__main__":
     report_out_address=''+str(chrom_output)+'_report_mismatches.txt' 
     qual_blocks = report_comparison_with10x(report_out_address, comparison_result_blocks, chrom_output, allele_10x_dic)
         
-    report_qc_address=''+str(chrom_output)+'/'+str(chrom_output)+'_report_qc.txt' #
+    report_qc_address=''+str(chrom_output)+'_report_qc.txt'
     report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf)
 
   
