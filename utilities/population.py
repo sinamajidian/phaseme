@@ -16,11 +16,11 @@ import random
 def run_shapeit_graph(chr_vcf, data_1000G_address, chrom): # run per chromosom
 
 
-	shapeit_check= SHAPEIT+" -check --input-vcf "+chr_vcf+" -R "+data_1000G_address+"1000GP_Phase3_chr"+str(chrom)+".hap.gz "+data_1000G_address+"1000GP_Phase3_chr"+str(chrom)+".legend.gz  "+data_1000G_address+"1000GP_Phase3.sample --output-log files_"+str(chrom)+"/shapeit_check >> files_"+str(chrom)+"/log_samples.log"
+	shapeit_check= SHAPEIT+" -check --input-vcf "+chr_vcf+" -R "+data_1000G_address+"1000GP_Phase3_chr"+str(chrom)+".hap.gz "+data_1000G_address+"1000GP_Phase3_chr"+str(chrom)+".legend.gz  "+data_1000G_address+"1000GP_Phase3.sample --output-log files_"+str(chrom)+"/shapeit_check >> files_"+str(chrom)+"/samples.log"
 
 	subprocess.call(shapeit_check, shell=True)
 
-	shapeit_generate_graph= SHAPEIT+" --input-vcf  "+chr_vcf+" -R "+data_1000G_address+"1000GP_Phase3_chr"+str(chrom)+".hap.gz "+data_1000G_address+"1000GP_Phase3_chr"+str(chrom)+".legend.gz "+data_1000G_address+"1000GP_Phase3.sample  -M "+data_1000G_address+"genetic_map_chr"+str(chrom)+"_combined_b37.txt  --output-log files_"+str(chrom)+"/shapeit_graph --output-graph "+chr_vcf[:-4]+".graph --exclude-snp  files_"+str(chrom)+"/shapeit_check.snp.strand.exclude >> files_"+str(chrom)+"/log_samples.log"
+	shapeit_generate_graph= SHAPEIT+" --input-vcf  "+chr_vcf+" -R "+data_1000G_address+"1000GP_Phase3_chr"+str(chrom)+".hap.gz "+data_1000G_address+"1000GP_Phase3_chr"+str(chrom)+".legend.gz "+data_1000G_address+"1000GP_Phase3.sample  -M "+data_1000G_address+"genetic_map_chr"+str(chrom)+"_combined_b37.txt  --output-log files_"+str(chrom)+"/shapeit_graph --output-graph "+chr_vcf[:-4]+".graph --exclude-snp  files_"+str(chrom)+"/shapeit_check.snp.strand.exclude >> files_"+str(chrom)+"/samples.log"
 
 	subprocess.call(shapeit_generate_graph, shell=True)
 
@@ -124,7 +124,7 @@ def sample_haplotype_graph(input_graph, num_samples):
 
 
 		seed = random.randint(1,10000000)
-		shapeit_sample_hap_graph= SHAPEIT+" -convert --seed "+str(seed)+" --input-graph "+str(input_graph)+" --output-sample files_"+str(chrom)+"/sample_"+str(sample_i)+" -L files_"+str(chrom)+"/samples/sample_"+str(sample_i)+">> files_"+str(chrom)+"/samples.log"
+		shapeit_sample_hap_graph= SHAPEIT+" -convert --seed "+str(seed)+" --input-graph "+str(input_graph)+" --output-sample files_"+str(chrom)+"/samples/sample_"+str(sample_i)+" -L files_"+str(chrom)+"/samples/sample_"+str(sample_i)+">> files_"+str(chrom)+"/samples.log"
 
 		subprocess.call(shapeit_sample_hap_graph, shell=True)
 	
@@ -172,20 +172,20 @@ if __name__ == "__main__":
 	# subprocess.call(split_vcf, shell=True)
 
 
-	chrom = 22
+	chrom = 19
 	subprocess.call("mkdir files_"+str(chrom), shell=True)	
-	input_vcf = "ccs/"+str(chrom)+"/"+str(chrom)+"_ccs.vcf"  # after removing ungenotyped
+	input_vcf = "clr/"+str(chrom)+"/"+str(chrom)+"_clr.vcf"  # after removing ungenotyped
 	chr_vcf = input_vcf 
 
 
 	run_shapeit_graph(chr_vcf, data_1000G_address, chrom)
 	haplotype_graph = input_vcf[:-4]+".graph" 
 	
-	print("haplotype graph is generated"+haplotype_graph)
+	print("haplotype graph is generated: "+haplotype_graph)
 
 
 	haplotype1_samples, var_pos_list = sample_haplotype_graph(haplotype_graph, num_samples)
-	print(str(num_samples)+" samples of haplotype graph is generated")
+	print(str(num_samples)+" samples of haplotype graph is generated.")
 
 	pairs = extract_pairs(haplotype1_samples)
 	
