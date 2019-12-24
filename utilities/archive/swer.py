@@ -1,11 +1,17 @@
+#### Parsing phased VCF file containing two sample for comparison
+
+
+# vcf_file_address = "/Volumes/uni/working_phasme/from_ssm/19_nei10/19_ont_true.vcf" # 19_ont_true.vcf" 19_ont_true_improved_.90
 from sys import argv
-import numpy as np
+import numpy as np 
 
 
 #### Parsing phased VCF file containing two sample for comparison
 
 
 vcf_file_address =  argv[1] #"/home/ssm/Documents/phaseme/ont/1/1_ont_true.vcf" 
+tr = int(argv[2])
+
 # "/Volumes/uni/myjupyter/jupyter_phaseme/ont_son/1/1_ont_true.vcf" # son_improved_.90_tr1
 
 
@@ -13,6 +19,8 @@ vcf_file = open(vcf_file_address,'r');
 
 hap_blocks_sample1_dic={} # key: id of phase block (i.e. phase st), value= {genomic_position:allele_1}
 hap_blocks_sample2_dic={} 
+
+hap_len_sample1_dic={}
 
 header_lines_list=[]
 for line in vcf_file:
@@ -28,31 +36,45 @@ for line in vcf_file:
         line_parts=line_strip.split('\t') 
 
         gt_flags, sample1, sample2 = line_parts[8:11]
-        if "|" in sample1 and "|" in sample2: # both sample are phased for this variant
-
+        if "|" in sample1:
+            
             var_pos=int(line_parts[1])
-
+            
             sample1_split=sample1.split(":")
-            sample2_split=sample2.split(":")
 
             gt_flags_split=gt_flags.split(":")
 
-            block_id1 = sample1_split[gt_flags.split(":").index("PS")] #int(
-            block_id2 = sample2_split[gt_flags.split(":").index("PS")] #int(
-
+            block_id1 = sample1_split[gt_flags.split(":").index("PS")] #int(                
             allele_sample1=sample1_split[gt_flags.split(":").index("GT")]
-            allele_sample2=sample2_split[gt_flags.split(":").index("GT")]
-
-            if (allele_sample1 == '0|1' or allele_sample1 == '1|0') and (allele_sample2 == '0|1' or allele_sample2 == '1|0'):
-                if block_id1 in hap_blocks_sample1_dic:
-                    hap_blocks_sample1_dic[block_id1][var_pos]=allele_sample1 # append new variants to the existing phase block
+            if allele_sample1 == '0|1' or '1|0':
+                if block_id1 in hap_len_sample1_dic:
+                    hap_len_sample1_dic[block_id1].append(var_pos) # append new variants to the existing phase block
                 else:
-                    hap_blocks_sample1_dic[block_id1]={var_pos:allele_sample1} # creat new phase block
+                    hap_len_sample1_dic[block_id1]= [var_pos] # creat new phase block
 
-                if block_id2 in hap_blocks_sample2_dic:
-                    hap_blocks_sample2_dic[block_id2][var_pos]=allele_sample2 # append new variants to the existing phase block
-                else:
-                    hap_blocks_sample2_dic[block_id2]={var_pos:allele_sample2} # creat new phase block
+            
+            if "|" in sample2: # both sample are phased for this variant
+
+                
+
+
+                sample2_split=sample2.split(":")
+
+
+                block_id2 = sample2_split[gt_flags.split(":").index("PS")] #int(
+
+                allele_sample2=sample2_split[gt_flags.split(":").index("GT")]
+
+                if (allele_sample1 == '0|1' or allele_sample1 == '1|0') and (allele_sample2 == '0|1' or allele_sample2 == '1|0'):
+                    if block_id1 in hap_blocks_sample1_dic:
+                        hap_blocks_sample1_dic[block_id1][var_pos]=allele_sample1 # append new variants to the existing phase block
+                    else:
+                        hap_blocks_sample1_dic[block_id1]={var_pos:allele_sample1} # creat new phase block
+
+                    if block_id2 in hap_blocks_sample2_dic:
+                        hap_blocks_sample2_dic[block_id2][var_pos]=allele_sample2 # append new variants to the existing phase block
+                    else:
+                        hap_blocks_sample2_dic[block_id2]={var_pos:allele_sample2} # creat new phase block
 
 
 print('Number of blocks in sample:',len(hap_blocks_sample1_dic))
@@ -143,12 +165,13 @@ for list1 in list_all_consecutive: #  list1  consists of the starting position o
 
 list_length_minor= np.array(list_length_minor)
 
-lower_than_21=[length1<21 for length1 in list_length_minor]
-greater_than_20=[length1>20 for length1 in list_length_minor]
+# tr=50
+lower_than_21=[length1<tr+1 for length1 in list_length_minor]
+greater_than_20=[length1>tr for length1 in list_length_minor]
 
-print("smaller than 21")
+print("smaller than",tr+1)
 print("smaller ",sum(lower_than_21))
-print("greater than 20")
+print("greater than",tr)
 print("greater ",sum(greater_than_20))
 
 
@@ -157,128 +180,135 @@ print("greater ",sum(greater_than_20))
 
 
 
-length_minor_blocks ={}
-firstIdx_minor_blocks ={}
-for block_id_sample1, list_all_block in list_all_blocks.items(): 
+# length_minor_blocks ={}
+# firstIdx_minor_blocks ={}
+# for block_id_sample1, list_all_block in list_all_blocks.items(): 
 
-    length_minor_block = {}
-    firstIdx_minor_block = {}
+#     length_minor_block = {}
+#     firstIdx_minor_block = {}
 
-    for block_id_sample2, list1 in list_all_block.items(): 
+#     for block_id_sample2, list1 in list_all_block.items(): 
 
-        list_length = []
-        for i in range(1,len(list1)):
-            length1= list1[i]-list1[i-1]
-            list_length.append(length1)            
+#         list_length = []
+#         for i in range(1,len(list1)):
+#             length1= list1[i]-list1[i-1]
+#             list_length.append(length1)            
 
-        odd_sum = sum(list_length[0::2])
-        even_sum = sum(list_length[1::2])
-        min_sum= min([odd_sum, even_sum] )
-        val = [odd_sum, even_sum].index(min_sum)
-        length_minor=list_length[val::2] 
-
-
-        firstIdx_minor = list1[:-1][val::2]       # switches
-        if len(length_minor):
-            length_minor_block[block_id_sample2]=length_minor
-            firstIdx_minor_block[block_id_sample2]=firstIdx_minor
-
-    if len(length_minor_block):
-        length_minor_blocks[block_id_sample1]=length_minor_block
-        firstIdx_minor_blocks[block_id_sample1]=firstIdx_minor_block
+#         odd_sum = sum(list_length[0::2])
+#         even_sum = sum(list_length[1::2])
+#         min_sum= min([odd_sum, even_sum] )
+#         val = [odd_sum, even_sum].index(min_sum)
+#         length_minor=list_length[val::2] 
 
 
+#         firstIdx_minor = list1[:-1][val::2]       # switches
+#         if len(length_minor):
+#             length_minor_block[block_id_sample2]=length_minor
+#             firstIdx_minor_block[block_id_sample2]=firstIdx_minor
 
-first_het_variant = True
-
-vcf_file = open(vcf_file_address,'r')
-
-var_pos_blocks = [] # position of those variants that the truth is known
-
-id_blocks=[]
-for line in vcf_file:
-
-    line_strip = line.strip() 
-
-    if line_strip.startswith('#'):
-        pass 
-        #header_lines_list.append(line_strip)
-        #sample_names = line_strip.split('\t')[9:11]            # last line of header contains sample name
-    else:
-
-        line_parts = line_strip.split('\t') 
-
-        chrom = line_parts[0]
-        var_pos = int(line_parts[1])                           # genomic position of variants
-
-        format_genotype, values_genotype = line_parts[8:10]    # 'GT:GQ:DP:AF:GL:PS', '0|1:255:.:.:.,0,.:60780'
-
-        values_genotype_splitted = values_genotype.split(':')
-        format_genotype_splitted = format_genotype.split(':')
-
-        gt_index = format_genotype_splitted.index("GT")           #  index of allele in  values_genotype 
-
-        allele = values_genotype_splitted[gt_index]
-
-        if (allele == '0|1' or allele == '1|0'):
-
-            ps_index = format_genotype_splitted.index("PS")           #  index of phase set in values_genotype 
-            id_block = values_genotype_splitted[ps_index]
-
-            values_genotype_truth = line_parts[10]
-            values_genotype_truth_splitted = values_genotype_truth.split(':')
-            allele_truth = values_genotype_truth_splitted[gt_index]
-            id_block_truth = values_genotype_truth_splitted[ps_index]
-
-            #if allele_truth != './.':
-            if allele_truth == '0|1'  or allele_truth == '1|0':
-
-                if first_het_variant:           # for the first het variant
-                    first_het_variant = False
-
-                    var_pos_block = [int(var_pos)]
-                    id_blocks.append(id_block)
-
-                else:                              # for the rest of het variants
-                    if id_block in id_blocks:
-                        var_pos_block.append(int(var_pos)) 
-
-                    else:
-
-                        # add previous block to the list of all blocks
-                        var_pos_blocks.append(var_pos_block)
-
-                        # creat new phase block
-                        var_pos_block = [int(var_pos)]
-                        id_blocks.append(id_block)
-
-# # for the last het variant, we  finish the last block.
-var_pos_blocks.append(var_pos_block)
+#     if len(length_minor_block):
+#         length_minor_blocks[block_id_sample1]=length_minor_block
+#         firstIdx_minor_blocks[block_id_sample1]=firstIdx_minor_block
 
 
 
+# first_het_variant = True
 
-for block_id_sample1, length_minor_block in length_minor_blocks.items(): 
-    firstIdx_minor_block = firstIdx_minor_blocks[block_id_sample1]
+# vcf_file = open(vcf_file_address,'r')
+
+# var_pos_blocks = [] # position of those variants that the truth is known
+
+# id_blocks=[]
+# for line in vcf_file:
+
+#     line_strip = line.strip() 
+
+#     if line_strip.startswith('#'):
+#         pass 
+#         #header_lines_list.append(line_strip)
+#         #sample_names = line_strip.split('\t')[9:11]            # last line of header contains sample name
+#     else:
+
+#         line_parts = line_strip.split('\t') 
+
+#         chrom = line_parts[0]
+#         var_pos = int(line_parts[1])                           # genomic position of variants
+
+#         format_genotype, values_genotype = line_parts[8:10]    # 'GT:GQ:DP:AF:GL:PS', '0|1:255:.:.:.,0,.:60780'
+
+#         values_genotype_splitted = values_genotype.split(':')
+#         format_genotype_splitted = format_genotype.split(':')
+
+#         gt_index = format_genotype_splitted.index("GT")           #  index of allele in  values_genotype 
+
+#         allele = values_genotype_splitted[gt_index]
+
+#         if (allele == '0|1' or allele == '1|0'):
+
+#             ps_index = format_genotype_splitted.index("PS")           #  index of phase set in values_genotype 
+#             id_block = values_genotype_splitted[ps_index]
+
+#             values_genotype_truth = line_parts[10]
+#             values_genotype_truth_splitted = values_genotype_truth.split(':')
+#             allele_truth = values_genotype_truth_splitted[gt_index]
+#             id_block_truth = values_genotype_truth_splitted[ps_index]
+
+#             #if allele_truth != './.':
+#             if allele_truth == '0|1'  or allele_truth == '1|0':
+
+#                 if first_het_variant:           # for the first het variant
+#                     first_het_variant = False
+
+#                     var_pos_block = [int(var_pos)]
+#                     id_blocks.append(id_block)
+
+#                 else:                              # for the rest of het variants
+#                     if id_block in id_blocks:
+#                         var_pos_block.append(int(var_pos)) 
+
+#                     else:
+
+#                         # add previous block to the list of all blocks
+#                         var_pos_blocks.append(var_pos_block)
+
+#                         # creat new phase block
+#                         var_pos_block = [int(var_pos)]
+#                         id_blocks.append(id_block)
+
+# # # for the last het variant, we  finish the last block.
+# var_pos_blocks.append(var_pos_block)
 
 
-    for block_id_sample2, length_minor in length_minor_block.items(): 
 
-        firstIdx_minor = np.array(firstIdx_minor_block[block_id_sample2])
 
-        list_length_minor = np.array(length_minor)
+# for block_id_sample1, length_minor_block in length_minor_blocks.items(): 
+#     firstIdx_minor_block = firstIdx_minor_blocks[block_id_sample1]
 
-        lower_than_21_logic=[length1<20 for length1 in list_length_minor]
 
-        greater_than_21_logic=[not i for i in lower_than_21_logic] # greater than and equal
+#     for block_id_sample2, length_minor in length_minor_block.items(): 
 
-        print(block_id_sample1,sum(lower_than_21_logic),sum(greater_than_21_logic))
-        if sum(greater_than_21_logic):
-            var_pos_list = var_pos_blocks[id_blocks.index(block_id_sample1)]
-            var_pos_switch_list =  [ var_pos_list[i] for i in firstIdx_minor[greater_than_21_logic]]
+#         firstIdx_minor = np.array(firstIdx_minor_block[block_id_sample2])
 
-            print("The switch starts at",var_pos_switch_list)
-            # grep "20610824" 22_report_mismatches_both.txt | grep -v "^\." | sed -n 10783,10785p 
-            print("with the length", list_length_minor[greater_than_21_logic])
+#         list_length_minor = np.array(length_minor)
+
+#         lower_than_21_logic=[length1<tr for length1 in list_length_minor]
+
+#         greater_than_21_logic=[not i for i in lower_than_21_logic] # greater than and equal
+
+#         print(block_id_sample1,sum(lower_than_21_logic),sum(greater_than_21_logic))
+#         if sum(greater_than_21_logic):
+#             var_pos_list = var_pos_blocks[id_blocks.index(block_id_sample1)]
+#             var_pos_switch_list =  [ var_pos_list[i] for i in firstIdx_minor[greater_than_21_logic]]
+
+#             print("The switch starts at",var_pos_switch_list)
+#             # grep "20610824" 22_report_mismatches_both.txt | grep -v "^\." | sed -n 10783,10785p 
+#             print("with the length", list_length_minor[greater_than_21_logic])
+
+list_len=[len(pos_list) for block_id, pos_list in hap_len_sample1_dic.items()]
+list_len_kb=[pos_list[-1]-pos_list[0] for block_id, pos_list in hap_len_sample1_dic.items()]
+
+# print(list_len)
+print("length" ,round(np.mean(list_len_kb)/1000,2))
+
 
 
