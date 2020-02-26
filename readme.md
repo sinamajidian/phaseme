@@ -32,7 +32,7 @@ python utilities/improver.py
 ```
 
 
-#Installation test
+# Installation Test
 Please try our sample data to establish the correctness of the pipline instaltionat. This can be found in the folder example.
 Run:
 
