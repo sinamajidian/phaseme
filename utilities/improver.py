@@ -6,11 +6,11 @@ from sys import argv
 
 
 
-tresh_match_mismatch= 1.1
+tresh_match_mismatch_cut= 1
     
-    
+NEIGHBOURS = 10
 
-def read_vcf_file_with10x(vcf_file_address):    
+def read_vcf_file_withtruth(vcf_file_address):    
     
     """
     Reading the vcf file
@@ -31,7 +31,7 @@ def read_vcf_file_with10x(vcf_file_address):
     
     
     
-    allele_10x_dic = {}
+    allele_truth_dic = {}
     
     vcf_file = open(vcf_file_address,'r')
 
@@ -93,9 +93,9 @@ def read_vcf_file_with10x(vcf_file_address):
             
             # how should we handle '2' in allele ?  
             
-            if './.' in allele:
-                print("There is a vriant with genomic position "+str(var_pos)+" that is not genotyped. Remove it first.")
-                exit(1)
+#             if './.' in allele:
+#                 print("There is a vriant with genomic position "+str(var_pos)+" that is not genotyped. Remove it first.")
+#                 exit(1)
                 
             
             # if '/' in allele: print("There is a vriant with genomic position "+str(var_pos)+" that is not phased. Remove it first.")            
@@ -149,12 +149,12 @@ def read_vcf_file_with10x(vcf_file_address):
     
     
 
-                values_genotype_10x = line_parts[10]
-                values_genotype_10x_splitted = values_genotype_10x.split(':')
-                allele_10x = values_genotype_10x_splitted[gt_index]
-                id_block_10x = values_genotype_10x_splitted[ps_index]
-                if allele_10x != './.':
-                    allele_10x_dic[var_pos]= str(id_block_10x)+':'+str(allele_10x)
+                values_genotype_truth = line_parts[10]
+                values_genotype_truth_splitted = values_genotype_truth.split(':')
+                allele_truth = values_genotype_truth_splitted[gt_index]
+                id_block_truth = values_genotype_truth_splitted[ps_index]
+                if allele_truth != './.':
+                    allele_truth_dic[var_pos]= str(id_block_truth)+':'+str(allele_truth)
     
     
     
@@ -184,13 +184,13 @@ def read_vcf_file_with10x(vcf_file_address):
 
 
 
-    return lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, allele_10x_dic
+    return lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, allele_truth_dic
 
 
 
 
 #def read_file_mismatches(file_mismatches_address, id_blocks):
-def read_file_mismatches_with10x(file_mismatches_address, id_blocks):
+def read_file_mismatches_withtruth(file_mismatches_address, id_blocks):
 
     file = open(file_mismatches_address,'r')
         
@@ -215,9 +215,9 @@ def read_file_mismatches_with10x(file_mismatches_address, id_blocks):
             
             first_variant=False
             
-            line_parts_with10x = line.strip().split('\t')     # ['42081', '0', '42096', '0']
+            line_parts_withtruth = line.strip().split('\t')     # ['42081', '0', '42096', '0']
             
-            line_parts = line_parts_with10x[2:]
+            line_parts = line_parts_withtruth[2:]
             
             chrom = line_parts[0]
             var_pos = int(line_parts[1])
@@ -478,87 +478,6 @@ def compare_phase_block_pop(allele_block, var_pos_block, pop_inf_dic, lower_boun
 
 
 
-def decide_flip_cut(id_blocks, allele_blocks, var_pos_blocks, comparison_result_blocks):
-    
-    flip_list = []
-    cut_list_blocks = []
-
-    for block_i, block_id  in enumerate(id_blocks):
-
-        allele_block = allele_blocks[block_i]       # hap_block
-        var_pos_block = var_pos_blocks[block_i] 
-        
-        
-        # after deciding the cut, it is not applied, so the number of block is not changed.
-        # but after deciding the match/mismatch information is updated for those varaint afterwards and removed for previose since new block is started practically. 
-        
-        comparison_result_block = comparison_result_blocks[block_i] # ont_pop_block
-
-        
-        cut_list_block=[]
-
-        for var_i, var_pos in enumerate(var_pos_block):  # var_pos_block idc_block
-            
-            # var_i is the index of variant within block
-            # var_pos is the genomic position of variant
-
-            
-            
-            comparison_result = comparison_result_block[var_i]  # rightafter we decide a cut, we use an updated version of comparison_result_block
-
-            if comparison_result == [[],[]]:  # there is no population information for this variant
-                out_pairs = '.'
-                
-            else:
-                [matched_list, mismatched_list] = comparison_result    
-                
-                num_mismatched = len(mismatched_list)
-                num_matched = len(matched_list)
-                
-                condition_flip_cut = 0
-                condition_flip = 0
-                condition_cut = 0
-                
-                if num_mismatched >= 2:
-
-                    [matched_next1, mismatched_next1] = comparison_result_block[var_i+1]
-                    [matched_next2, mismatched_next2] = comparison_result_block[var_i+2]
-
-                    num_matched_next1 = len(matched_next1)
-                    num_mismatched_next1 = len(mismatched_next1)
-                    
-                    
-                    if num_matched == 0 or num_matched/num_mismatched < tresh_match_mismatch:
-                        if num_mismatched_next1 >=1 and (num_matched_next1 == 0 or num_matched_next1/num_mismatched_next1 < tresh_match_mismatch):
-                            condition_cut = 1
-                    
-                    if var_pos in mismatched_next1 and var_pos in mismatched_next2:
-                        condition_flip = 1
-
-                        
-                if condition_flip:
-                    print('flip candidate', var_pos)
-                    flip_list.append(var_pos)
-                    
-                if condition_cut and not condition_flip:
-                    cut_pos = var_pos                 # cut_pos the starting position of new block
-                    print('cut candidate', cut_pos) 
-                    
-                    cut_list_block.append(var_pos)
-                    
-                    lower_bound = var_pos
-                    upper_bound = var_pos_block[-1]
-                    
-                    # after deciding the cut, it is not applied, so the number of block is not changed.
-                    # but after deciding the match/mismatch information is updated for those varaint afterwards and removed for previose since new block is started practically. 
-        
-                    comparison_result_block = compare_phase_block_pop(allele_block, var_pos_block, pop_inf_dic, lower_bound, upper_bound)
-        cut_list_blocks.append(cut_list_block)
-    return flip_list, cut_list_blocks             
-
-
-
-
 
 def improve_vcf_flip(lines_list, line_number_het_list, flip_list):
     
@@ -681,6 +600,214 @@ def write_out_vcf(lines_list, lines_list_improved_cut):
 
 
 
+
+def decide_cut(id_blocks, allele_blocks, var_pos_blocks, comparison_result_blocks):
+    
+    cut_list_blocks = []
+    
+    block_i = 0 
+    block_id = id_blocks[block_i]
+    
+    
+    
+    for block_i, block_id  in enumerate(id_blocks):
+
+        
+        # print('working on block :',block_id)
+        allele_block = allele_blocks[block_i]      
+        var_pos_block = var_pos_blocks[block_i] 
+        
+        
+        # after deciding the cut, it is not applied, so the number of block is not changed.
+        # but after deciding the match/mismatch information is updated for those varaint afterwards and removed for previose since new block is started practically. 
+        
+        comparison_result_block = comparison_result_blocks[block_i] # ont_pop_block
+
+        
+        cut_list_block=[]
+
+        for var_i, var_pos in enumerate(var_pos_block):  # var_pos_block idc_block
+            
+            # var_i is the index of variant within block
+            # var_pos is the genomic position of variant
+
+            
+            
+            comparison_result = comparison_result_block[var_i]  # rightafter we decide a cut, we use an updated version of comparison_result_block
+
+            if comparison_result == [[],[]]:  # there is no population information for this variant
+                out_pairs = '.'
+                
+            else:
+                [matched_list, mismatched_list] = comparison_result    
+                
+                num_mismatched = len(mismatched_list)
+                num_matched = len(matched_list)
+                
+                condition_cut = 0
+                
+                if num_mismatched >= 2:
+                    
+                    
+                    
+                    try:
+                        [matched_next1, mismatched_next1] = comparison_result_block[var_i+1]
+                    except IndexError: # Next variants are not in the block
+                        matched_next1 = []
+                        mismatched_next1 = []
+                    
+                    num_matched_next1 = len(matched_next1)
+                    num_mismatched_next1 = len(mismatched_next1)
+                    
+                    
+#                     if num_matched == 0 or num_matched/num_mismatched < tresh_match_mismatch_cut:
+#                         if num_mismatched_next1 >=1 and (num_matched_next1 == 0 or num_matched_next1/num_mismatched_next1 < tresh_match_mismatch_cut):
+#                             condition_cut = 1
+
+                    for var_neighbour_j in range(var_i+1, min(len(var_pos_block),var_i+NEIGHBOURS+1)):
+                        [matched_neighbour_j, mismatched_neighbour_j] = comparison_result_block[var_neighbour_j]
+            
+                        num_matched_j = len(matched_neighbour_j)
+                        num_mismatched_j = len(mismatched_neighbour_j)
+                        
+            
+                        if num_mismatched_j >=1 and (num_matched_j == 0 or num_matched_j/num_mismatched_j < tresh_match_mismatch_cut):
+                            condition_cut = 1
+                    
+                        # ideal case, mismatchin_in_next_ten should be before the  var_pos to be a good cut
+        
+        
+        
+        
+                if condition_cut :#and not condition_flip:
+                    cut_pos = var_pos                 # cut_pos the starting position of new block
+                    print('cut candidate', cut_pos) 
+                    
+                    cut_list_block.append(var_pos)
+                    
+                    lower_bound = var_pos
+                    upper_bound = var_pos_block[-1]
+                    
+                    # after deciding the cut, it is not applied, so the number of block is not changed.
+                    # but after deciding the match/mismatch information is updated for those varaint afterwards and removed for previose since new block is started practically. 
+        
+                    comparison_result_block = compare_phase_block_pop(allele_block, var_pos_block, pop_inf_dic, lower_bound, upper_bound)
+        cut_list_blocks.append(cut_list_block)
+    return cut_list_blocks             
+
+
+
+def decide_flip(id_blocks, allele_blocks, var_pos_blocks, comparison_result_blocks):
+    
+    flip_list = []
+    
+    block_i = 0 
+    block_id = id_blocks[block_i]
+    
+    
+    for block_i, block_id  in enumerate(id_blocks):
+
+        
+        # print('working on block :',block_id)
+        allele_block = allele_blocks[block_i]      
+        var_pos_block = var_pos_blocks[block_i] 
+        
+        
+        # after deciding the cut, it is not applied, so the number of block is not changed.
+        # but after deciding the match/mismatch information is updated for those varaint afterwards and removed for previose since new block is started practically. 
+        
+        comparison_result_block = comparison_result_blocks[block_i] # ont_pop_block
+
+        
+        cut_list_block=[]
+
+        for var_i, var_pos in enumerate(var_pos_block):  # var_pos_block idc_block
+            
+            # var_i is the index of variant within block
+            # var_pos is the genomic position of variant
+
+            
+            
+            comparison_result = comparison_result_block[var_i]  # rightafter we decide a cut, we use an updated version of comparison_result_block
+
+            if comparison_result == [[],[]]:  # there is no population information for this variant
+                out_pairs = '.'
+                
+            else:
+                [matched_list, mismatched_list] = comparison_result    
+                
+                num_mismatched = len(mismatched_list)
+                num_matched = len(matched_list)
+                
+                condition_flip = 0
+                condition_cut = 0
+                
+                if num_mismatched >= 2:
+                    
+
+                        
+                    pairs_subseqeunt_neighbours_all = 0
+                    pairs_previous_neighbours_all = 0
+                    
+                    num_membership_mis_subseqeunt = 0
+                    num_membership_mis_previous = 0
+                    
+                    num_membership_matched_subseqeunt = 0
+                    num_membership_matched_previous = 0                    
+                    # all of var_neighbour_j  should be the same block.  also after cut. hard to implement maybe
+                    
+                    for var_neighbour_j in range(var_i+1, min(len(var_pos_block),var_i+NEIGHBOURS+1)):
+                        [matched_neighbour_j, mismatched_neighbour_j] = comparison_result_block[var_neighbour_j]
+                        
+                        pairs_subseqeunt_neighbours_all += len(matched_neighbour_j)+len(mismatched_neighbour_j)
+                        
+                        if str(var_pos) in mismatched_neighbour_j:
+                            num_membership_mis_subseqeunt +=1
+                        
+                        if str(var_pos) in matched_neighbour_j: 
+                            num_membership_matched_subseqeunt += 1
+                            
+                    
+                    for var_neighbour_j in range(max(0, var_i-NEIGHBOURS-1),var_i):
+                        [matched_neighbour_j, mismatched_neighbour_j] = comparison_result_block[var_neighbour_j]
+                        
+                        pairs_previous_neighbours_all += len(matched_neighbour_j)+len(mismatched_neighbour_j)
+                        
+                        if str(var_pos) in mismatched_neighbour_j:
+                            num_membership_mis_previous +=1
+                            
+                        if str(var_pos) in matched_neighbour_j: 
+                            num_membership_matched_previous += 1
+                    
+                    
+                    if  num_membership_mis_subseqeunt >= 1 and num_membership_mis_previous >= 1:
+                        condition_flip = 1 
+
+#                     if  num_membership_mis_subseqeunt >= 2 and (pairs_previous_neighbours_all == 0):   
+#                         condition_flip = 1 
+                        
+#                     if  num_membership_mis_previous >= 2 and (pairs_subseqeunt_neighbours_all == 0):
+#                         condition_flip = 1 
+
+                    if num_membership_matched_subseqeunt or num_membership_matched_previous:
+                        condition_flip = 0
+                        
+                    #if   var_pos == 23480472:
+                    #    print('here',num_membership_matched_subseqeunt,num_membership_matched_previous)
+                        
+                if condition_flip:
+                    print('flip candidate', var_pos)
+                    flip_list.append(var_pos)
+                    
+    return flip_list            
+
+
+
+
+
+
+
+
 if __name__ == "__main__":
 
     
@@ -692,42 +819,60 @@ if __name__ == "__main__":
     Output:
     
     """
-
-
-    chrom = 22
-    vcf_file_address = 'input/'+str(chrom)+'_ont_10x.vcf'
-    file_mismatches_address = 'Expected_output/'+str(chrom)+'_report_mismatches_forward.txt'
-    file_pairs_address = 'input/'+str(chrom)+'_pairs.txt'
-
-
-
-                
-    lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, allele_10x_dic  =  read_vcf_file_with10x(vcf_file_address)
-
-    comparison_result_blocks = read_file_mismatches_with10x(file_mismatches_address, id_blocks)
     
     
+    type_data ='ont'
+
+
+    chrom = 1
     
+    vcf_file_address = argv[1]  # type_data+'_son/'+str(chrom)+'/'+str(chrom)+'_'+type_data+'_true.vcf'
+
+    lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, allele_10x_dic  =  read_vcf_file_withtruth(vcf_file_address)
+
+    
+
+    
+
+    Forward_or_both = 'both'
+    file_mismatches_address = argv[1][:-4]+'_report_mismatches_'+Forward_or_both+'.txt'
+#type_data+'_son/'+str(chrom)+'_report_mismatches_'+Forward_or_both+'.txt'
+    comparison_result_blocks = read_file_mismatches_withtruth(file_mismatches_address, id_blocks)
+
+    file_pairs_address= argv[2]
+#type_data+'_son/'+str(chrom)+'/'+str(chrom)+'_'+type_data+'_pairs_500_0.9.txt' 
+    pop_inf_dic = read_file_pairs_forward(file_pairs_address)         
+
+
+    flip_list = decide_flip(id_blocks, allele_blocks, var_pos_blocks, comparison_result_blocks)
+
+
+
+
+
+    # cut
+
+
     Forward_or_both = 'forward'
-    
-    if Forward_or_both == 'forward':
-        pop_inf_dic = read_file_pairs_forward(file_pairs_address)         
-        
-    if Forward_or_both == 'both':                       # reproting pairs both forward and backward
-        pop_inf_dic = read_file_pairs_forward_backward(file_pairs_address)    
-        
-        
+    file_mismatches_address = argv[1][:-4]+'_report_mismatches_'+Forward_or_both+'.txt'
+#type_data+'_son/'+str(chrom)+'_report_mismatches_'+Forward_or_both+'.txt'
+    comparison_result_blocks = read_file_mismatches_withtruth(file_mismatches_address, id_blocks)
 
-    flip_list, cut_list_blocks = decide_flip_cut(id_blocks, allele_blocks, var_pos_blocks, comparison_result_blocks)
 
-    # becareful about the concpet of deep copy.  Changes may affect the lines_list
+    # file_pairs_address= type_data+'_son/'+str(chrom)+'/'+str(chrom)+'_'+type_data+'_pairs_500_0.9.txt' 
+    #pop_inf_dic = read_file_pairs_forward(file_pairs_address)          # 22_ont_1kg_80k_pairs_0.9_20het_samples
+
+
+    cut_list_blocks = decide_cut(id_blocks, allele_blocks, var_pos_blocks, comparison_result_blocks)
+
+
+
     lines_list_improved_flipping = improve_vcf_flip(lines_list, line_number_het_list, flip_list)  # it may contain homo vars
-    
-    
+
+
     lines_list_improved_cut= improve_vcf_cut(lines_list_improved_flipping, id_blocks, cut_list_blocks, var_pos_blocks)
 
-    vcf_file_improved_address = ''+str(chrom)+'_ont_improved.vcf' 
+    vcf_file_improved_address = argv[1][:-4]+'_improved_.90.vcf'
+#type_data+'_son/'+str(chrom)+'_'+type_data+'_son_improved_.90_tr1.vcf' 
     write_out_vcf(vcf_file_improved_address, lines_list_improved_cut)
-    
-
 

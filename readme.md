@@ -11,7 +11,7 @@ PhaseMe is a tool set to assess the quality of the per read phasing information 
 3. You will need to run shapeit similar as below. 
 
 
-Note that shapeit will complain about ungenotyped variations. Thus we recommend to remove these from the VCF file.
+Note that shapeit will complain about ungenotyped variations and those variants that are not bi-allelic. Thus we recommend to remove these from the VCF file.
 
 
 ## Step 1: Obtain population information over shapeit

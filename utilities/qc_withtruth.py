@@ -184,7 +184,7 @@ def read_vcf_file_with_truth(vcf_file_address):
 
 
 
-    return lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, allele_truth_dic
+    return lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, allele_truth_dic, chrom
 
 
 def read_file_pairs_forward(file_pairs_address):
@@ -562,17 +562,18 @@ if __name__ == "__main__":
     
     """
 
-    type_data ='ont'
-    chrom = 1
+    #type_data ='ont'
+    chrom = argv[3]
 
-    vcf_file_address = type_data+'_son/'+str(chrom)+'/'+str(chrom)+'_'+type_data+'_true.vcf'  # truth
-    #vcf_file_address = argv[1]
+    #vcf_file_address = type_data+'_son/'+str(chrom)+'/'+str(chrom)+'_'+type_data+'_true.vcf'  # truth
+    vcf_file_address = argv[1]
     
-    lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, allele_truth_dic = read_vcf_file_with_truth(vcf_file_address)
+    lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, allele_truth_dic, chrom = read_vcf_file_with_truth(vcf_file_address)
     
 
-    file_pairs_address= type_data+'_son/'+str(chrom)+'/'+str(chrom)+'_'+type_data+'_pairs_500_0.9.txt'  #'_pairs_500_0.98.txt'
-    #file_pairs_address= argv[2] 
+    #file_pairs_address= type_data+'_son/'+str(chrom)+'/'+str(chrom)+'_'+type_data+'_pairs_500_0.9.txt'  #'_pairs_500_0.98.txt'
+    file_pairs_address= argv[2] 
+    #file_pairs_address=  argv[1][:-4]+'_pairs_500_0.9.txt'  #'_pairs_500_0.98.txt'
     
     
     
@@ -605,10 +606,11 @@ if __name__ == "__main__":
 
 
 
-        report_out_address=type_data+'_son/'+str(chrom)+'/'+str(chrom)+'_report_mismatches_'+Forward_or_both+'.txt'
+        report_out_address=argv[1][:-4]+'_report_mismatches_'+Forward_or_both+'.txt'
+#type_data+'_son/'+str(chrom)+'/'+str(chrom)+'_report_mismatches_'+Forward_or_both+'.txt'
         qual_blocks = report_comparison_withtruth(report_out_address, comparison_result_blocks, chrom, allele_truth_dic)
 
-        report_qc_address=type_data+'_son/'+str(chrom)+'/'+str(chrom)+'_report_qc_'+Forward_or_both+'.txt'
+        report_qc_address=argv[1][:-4]+'_report_qc_'+Forward_or_both+'.txt' # type_data+'_son/'+str(chrom)+'/'+str(chrom)+'_report_qc_'+Forward_or_both+'.txt'
         report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf)
 
   
