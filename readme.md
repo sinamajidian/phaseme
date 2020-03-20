@@ -11,9 +11,9 @@ PhaseMe is a tool set to assess the quality of the per read phasing information 
 2- Run PhaseMe to obtain stats and improve the quality of phase blocks.
 
 ```
-python utilities/qc.py  utilities/precomputed/pair.txt file.vcf
+python utilities/qc.py  utilities/precomputed/pair_${chr}.txt file.vcf
 
-python utilities/improver.py utilities/precomputed/pair.txt file.vcf 
+python utilities/improver.py utilities/precomputed/pair_${chr}.txt file.vcf 
 ```
 
 
