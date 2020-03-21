@@ -11,15 +11,16 @@ PhaseME is a tool set to assess the quality of the per read phasing information 
 2- Run PhaseME to obtain stats and improve the quality of phase blocks.
 
 ```
-python utilities/qc.py  utilities/precomputed/pair_${chr}.txt file.vcf
+python phaseme.py improver my.vcf precomputed
 
-python utilities/improver.py utilities/precomputed/pair_${chr}.txt file.vcf 
 ```
+If you only want to have QC report use `qc` instead of `improver`. By not mentioning the last argument, PhaseME generates the linkage information rather using precomputed one.
+
 
 
 # Installation Test
 
-Please try our sample data to establish the correctness of the pipeline instaltion. This can be found in the folder `example`.
+Please try our sample data to establish the correctness of the pipeline installation. This can be found in the folder `example`.
 
 
 For generating individual-specific pair list, consider checking folder `linkage`.
