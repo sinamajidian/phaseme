@@ -22,9 +22,9 @@ Please try our sample data to establish the correctness of the pipeline installa
 
 
 
-# Individual-specific linkage information
+# Complete usage
 
-For grasping the full advantage of PhaseME, few steps are needed prior using PhaseME.
+In quick start section the precomputed linkage information is used. Here, individual-specific linkage information is considered.  For grasping the full advantage of PhaseME, few steps are needed prior using PhaseME.
 
 1- You need to download 1000 Genomes reference panel haplotypes.
 
