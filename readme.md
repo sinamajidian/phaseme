@@ -12,9 +12,8 @@ PhaseME is a tool set to assess the quality of the per read phasing information 
 
 ```
 python phaseme.py improver my.vcf precomputed
-
 ```
-If you only want to have QC report use `qc` instead of `improver`. By not mentioning the last argument, PhaseME generates the linkage information rather using precomputed one.
+If you only want to have QC report use `qc` instead of `improver`. By not mentioning the last argument, PhaseME generates the individual-specific linkage information rather using precomputed one.
 
 
 
@@ -23,11 +22,11 @@ If you only want to have QC report use `qc` instead of `improver`. By not mentio
 Please try our sample data to establish the correctness of the pipeline installation. This can be found in the folder `example`.
 
 
-For generating individual-specific pair list, consider checking folder `linkage`.
-
 # Citation:
 
 Please see and cite our manuscript: "PhaseME: automatic assessment of phasing quality and phasing improvement"
+
+
 
 
 
