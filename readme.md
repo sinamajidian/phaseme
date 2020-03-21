@@ -22,25 +22,21 @@ Please try our sample data to establish the correctness of the pipeline installa
 
 
 
+# Individual-specific linkage information
 
-## Individual-specific linkage information
+For grasping the full advantage of PhaseME, few steps are needed prior using PhaseME.
 
-For grasping the full advantage of PhaseME, few steps needed prior using PhaseME.
-
-1- You need 1000 Genomes reference panel haplotypes, which can be obtained from [here](https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.html)
+1- You need to download 1000 Genomes reference panel haplotypes.
 
 ```
 wget https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.tgz
-
-wget https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3_chrX.tgz
 ```
-
 Warning: These are more than 10Gb.
 
 
 2- You need to download the [Shapeit](https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.html)
 
-3- Now run the following
+3- Now, run PhasME as following.
 
 
 ```
