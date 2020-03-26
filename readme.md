@@ -44,7 +44,7 @@ Warning: These are more than 10Gb.
 
 
 ```
-python phaseme.py improver my.vcf /path/to/shapeit
+python phaseme.py my.vcf improver /path/to/shapeit /path/to/1000G/dataset
 ```
 
 
