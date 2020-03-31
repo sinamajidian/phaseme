@@ -11,7 +11,7 @@ PhaseME is a tool set to assess the quality of the per read phasing information 
 2- Run PhaseME to obtain stats and improve the quality of phase blocks.
 
 ```
-python phaseme.py my.vcf improver precomputed output_prefix
+python phaseme.py my.vcf output_prefix  improver precomputed
 ```
 If you only want to have QC report use `qc` instead of `improver`. 
 
@@ -21,10 +21,11 @@ If you only want to have QC report use `qc` instead of `improver`.
 Please try our sample data to establish the correctness of the pipeline installation. This can be found in the folder `example`.
 
 ```
-cd example
-python ../phaseme.py my.vcf improver precomputed out
+python phaseme.py example/my.vcf example/out improver precomputed
+
+
 ```
-The output will be a QC report `out_qc.txt` as well as an improved version of the input phased VCF `out_improved.vcf`.
+The output will be a QC report `example/out/out_qc.txt` as well as an improved version of the input phased VCF `example/out/out_improved.vcf`.
 
 # Complete usage
 
@@ -44,7 +45,7 @@ Warning: These are more than 10Gb.
 
 
 ```
-python phaseme.py my.vcf improver /path/to/shapeit /path/to/1000G/dataset
+python phaseme.py my.vcf output_prefix improver /path/to/shapeit /path/to/1000G/dataset
 ```
 
 
