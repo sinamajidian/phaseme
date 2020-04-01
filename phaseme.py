@@ -29,7 +29,7 @@ def split_vcf(vcf_file, out_prefix):
         length_raw = check_output("wc -l "+out_prefix+"/temp"+i,shell=True) #","wc","-l""
 
         length_raw2 = str(length_raw)
-        length_str = length_raw2[2:].strip().split(' ')[0]
+        length_str = length_raw2.strip().split(' ')[0]
 
         if length_str:
             length =int(length_str)
