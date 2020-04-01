@@ -22,9 +22,8 @@ Please try our sample data to establish the correctness of the pipeline installa
 
 ```
 python phaseme.py example/my.vcf example/out improver precomputed
-
-
 ```
+
 The output will be a QC report `example/out/out_qc.txt` as well as an improved version of the input phased VCF `example/out/out_improved.vcf`.
 
 # Complete usage
