@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 
 def split_vcf(vcf_file, out_prefix):
 
@@ -937,21 +938,21 @@ if __name__ == "__main__":
 
 
     if len(argv)==1:
-            "  ls path_1000g/1000GP_Phase3_chr1.hap.gz"]
+
 
         print("\n".join(help_note))
         exit()
 
 
-    elif len(argv)<6:
+    elif len(argv)<5:
         print("\nPlease provide enough argumnets \n \n")
         print("\n".join(help_note))
         exit()
 
-    elif len(argv)==6:
+    elif len(argv)==5:
         mode_phasme = "precomputed"
 
-    elif len(argv)==7:
+    elif len(argv)==6:
         mode_phasme = "individual"
         shapeit_address = argv[5]
         data_1000G_address = argv[6]
