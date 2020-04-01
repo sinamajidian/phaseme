@@ -967,14 +967,14 @@ if __name__ == "__main__":
     chrs_list = split_vcf(vcf_file_address, out_prefix)        # # "In this version, the first column of the VCF file should be in this format  22  ."
     print("Input VCF file contains "+str(len(chrs_list))+" chromosomes and is split into chr-bashed VCFs in "+out_prefix+".")
 
+    NEIGHBOURS =  20     # number of neighbour variants to be checked
+    tresh_match_mismatch_cut = 1
 
     if  mode_phasme == "individual":
 
-
-        NEIGHBOURS =  20     # number of neighbour variants to be checked
         THRESH=0.90          # the extent of  between samples
         num_samples =  500   # the number of times that we sample the haplotype graph (output of shapeit)
-        tresh_match_mismatch_cut = 1
+
         print("In case of error, please check the log files as well.")
         pair_linkage(chrs_list, shapeit_address, data_1000G_address, num_samples)
 
