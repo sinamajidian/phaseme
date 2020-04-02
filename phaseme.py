@@ -15,8 +15,9 @@ def split_vcf(vcf_file, out_prefix):
 
 
     subprocess.call("mkdir "+out_prefix , shell=True)
-
-    subprocess.call("cp "+vcf_file+" "+out_prefix+"/input.vcf", shell=True)
+    result_copy = subprocess.call("cp "+vcf_file+" "+out_prefix+"/input.vcf", shell=True)
+    if not result_copy:
+        exit()
 
 
     chrs_list = []
@@ -1071,6 +1072,14 @@ if __name__ == "__main__":
             report_qc_address=out_name_prefix+'_qc.txt'
             report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
 
+            if chrom == chrs_list[0]:
+                subprocess.call("head -n 2 "+report_qc_address+" > "+out_prefix+"/QC.csv", shell=True)
+
+            else:
+                subprocess.call("sed -n 3,3p "+report_qc_address+" >> "+out_prefix+"/QC.csv", shell=True)
+
+
+
     elif mode_phasme_qc_improver == "improver":
 
 
@@ -1113,6 +1122,13 @@ if __name__ == "__main__":
             report_qc_address=out_name_prefix+'_qc.txt'
             report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
 
+            if chrom == chrs_list[0]:
+                subprocess.call("head -n 3 "+report_qc_address+" > "+out_prefix+"/QC.csv", shell=True)
+
+            else:
+                subprocess.call("sed -n 3,3p "+report_qc_address+" >> "+out_prefix+"/QC.csv", shell=True)
+
+
 
             cut_list_blocks = decide_cut(id_blocks, allele_blocks, var_pos_blocks, comparison_result_blocks)
             #print(cut_list_blocks) # a list of list corresponding to the phase blocks
@@ -1121,6 +1137,15 @@ if __name__ == "__main__":
 
             vcf_file_improved_address = vcf_file_address[:-4]+'_improved.vcf'
             write_out_vcf(vcf_file_improved_address, lines_list_improved_cut)
+
+            if chrom == chrs_list[0]:
+                subprocess.call("cat "+vcf_file_improved_address+" > "+out_prefix+"/improved.vcf", shell=True)
+
+            else:
+                subprocess.call("grep -v \"#\" "+vcf_file_improved_address+" >> "+out_prefix+"/improved.vcf", shell=True)
+
+        print("The QC report  is ready at "+out_prefix+"/QC.vcf\n")
+        print("The improved VCF file is ready at "+out_prefix+"/improved.vcf\n")
 
 
 
