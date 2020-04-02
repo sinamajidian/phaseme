@@ -995,7 +995,7 @@ if __name__ == "__main__":
     if not len(chrs_list):
         print("The input VCF file at "+vcf_file_address+"is empty or does not exist or the first column (showing the chromosomes) is not a sole number (It shouldn't be chr1!)")
         exit()
-    print("Input VCF file contains "+str(len(chrs_list))+" chromosomes and is split into chr-bashed VCFs in "+out_prefix+".")
+    print("Input VCF file contains "+str(len(chrs_list))+" chromosome(s) and is split into chr-bashed VCFs in "+out_prefix+".")
 
 
     NEIGHBOURS =  20     # number of neighbour variants to be checked
@@ -1143,8 +1143,8 @@ if __name__ == "__main__":
             else:
                 subprocess.call("grep -v \"#\" "+vcf_file_improved_address+" >> "+out_prefix+"/improved.vcf", shell=True)
 
-        print("The QC report  is ready at "+out_prefix+"/QC.vcf\n")
-        print("The improved VCF file is ready at "+out_prefix+"/improved.vcf\n")
+        print("The QC report is ready at "+out_prefix+"/QC.vcf")
+        print("The improved VCF file is ready at "+out_prefix+"/improved.vcf")
 
 
 
