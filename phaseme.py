@@ -407,6 +407,8 @@ def read_vcf_file(vcf_file_address):
     ind = np.where(csum == csumn2)
     n50 = values_sorted[int(ind[0])]
 
+    phase_rate=np.sum(genomic_length_blocks)/ (var_pos_last-var_pos_first)
+
 
     stats_vcf = [homozygous0_num, homozygous1_num, hetrozygous_nonphased, hetrozygous_phased, genomic_length_blocks, n50,phase_rate]
 
@@ -666,7 +668,7 @@ def report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vc
                      "Number of non-phased heterozygous variants","Number of homozygous variants","Phase rate"]
 
 
-    file_report_qc.write("##"+",\t".join(first_line_list)+"\n")
+    file_report_qc.write("##"+",\t".join(first_line_list)+"\n\n")
     second_line_list=[str(chrom),str(n50),str(round(np.mean(q_list),5)),
                       str(hetrozygous_phased),str(hetrozygous_nonphased),
                       str(homozygous0_num+homozygous1_num),str(phase_rate)]
@@ -990,7 +992,11 @@ if __name__ == "__main__":
 
 
     chrs_list = split_vcf(vcf_file_address, out_prefix)        # # "In this version, the first column of the VCF file should be in this format  22  ."
+    if not len(chrs_list):
+        print("The input VCF file at "+vcf_file_address+"is empty or does not exist or the first column (showing the chromosomes) is not a sole number (It shouldn't be chr1!)")
+        exit()
     print("Input VCF file contains "+str(len(chrs_list))+" chromosomes and is split into chr-bashed VCFs in "+out_prefix+".")
+
 
     NEIGHBOURS =  20     # number of neighbour variants to be checked
     tresh_match_mismatch_cut = 1
@@ -1063,7 +1069,7 @@ if __name__ == "__main__":
             qual_blocks = report_comparison(report_out_address, comparison_result_blocks, id_blocks, chrom)
 
             report_qc_address=out_name_prefix+'_qc.txt'
-            report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf)
+            report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
 
     elif mode_phasme_qc_improver == "improver":
 
@@ -1105,7 +1111,7 @@ if __name__ == "__main__":
             qual_blocks = report_comparison(report_out_address, comparison_result_blocks, id_blocks, chrom)
 
             report_qc_address=out_name_prefix+'_qc.txt'
-            report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf)
+            report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
 
 
             cut_list_blocks = decide_cut(id_blocks, allele_blocks, var_pos_blocks, comparison_result_blocks)
