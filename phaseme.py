@@ -15,9 +15,8 @@ def split_vcf(vcf_file, out_prefix):
 
 
     subprocess.call("mkdir "+out_prefix , shell=True)
-    result_copy = subprocess.call("cp "+vcf_file+" "+out_prefix+"/input.vcf", shell=True)
-    if not result_copy:
-        exit()
+    subprocess.call("cp "+vcf_file+" "+out_prefix+"/input.vcf", shell=True)
+
 
 
     chrs_list = []
