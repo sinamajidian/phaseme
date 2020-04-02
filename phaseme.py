@@ -670,11 +670,11 @@ def report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vc
     second_line_list=[str(chrom),str(n50),str(round(np.mean(q_list),5)),
                       str(hetrozygous_phased),str(hetrozygous_nonphased),
                       str(homozygous0_num+homozygous1_num),str(phase_rate)]
-    file_report_qc.write(",\t".join(first_line_list)+"\n")
+    file_report_qc.write(",\t".join(second_line_list)+"\n\n")
 
+    file_report_qc.write("Quality report per block for chromosome "+str(chrom)+":\n")
+    file_report_qc.write("##Block_i,\tStart_pos,\tblock_length,\tnum_phased_SNV,\t\tblock_quality,\n")
 
-    file_report_qc.write("##Block_i,\tStart_pos,\tblock_length,\tnum_phased_SNV,\t\tblock_quality,\n \n")
-    file_report_qc.write("Quality report for chromosome "+str(chrom)+":\n \n")
 
 
 
@@ -697,6 +697,8 @@ def report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vc
 
     file_report_qc.close()
     return 1
+
+
 
 
 
