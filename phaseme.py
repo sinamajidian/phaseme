@@ -274,7 +274,7 @@ def read_vcf_file(vcf_file_address):
             id_blocks: list of ids of phas blocks
             allele_blocks: list of list
             var_pos_blocks: list of list
-            stats_vcf = [homozygous0_num, homozygous1_num, hetrozygous_nonphased, hetrozygous_phased, genomic_length_blocks, n50]
+            stats_vcf = [homozygous0_num, homozygous1_num, hetrozygous_nonphased, hetrozygous_phased, genomic_length_blocks, n50,phase_rate]
 
     """
 
@@ -300,6 +300,8 @@ def read_vcf_file(vcf_file_address):
     homozygous1_num = 0
     hetrozygous_nonphased = 0
     hetrozygous_phased = 0
+    first_first= True
+
 
     for line in vcf_file:
 
@@ -319,6 +321,9 @@ def read_vcf_file(vcf_file_address):
             chrom = line_parts[0]
 
             var_pos = int(line_parts[1])                           # genomic position of variants
+            if first_first==True:
+                var_pos_first=var_pos
+                first_first=False
 
             format_genotype, values_genotype = line_parts[8:10]    # 'GT:GQ:DP:AF:GL:PS', '0|1:255:.:.:.,0,.:60780'
 
@@ -383,7 +388,7 @@ def read_vcf_file(vcf_file_address):
                         id_blocks.append(id_block)
 
 
-
+    var_pos_last=var_pos
     # # for the last het variant, we  finish the last block.
     allele_blocks.append(allele_block)
     var_pos_blocks.append(var_pos_block)
@@ -403,7 +408,7 @@ def read_vcf_file(vcf_file_address):
     n50 = values_sorted[int(ind[0])]
 
 
-    stats_vcf = [homozygous0_num, homozygous1_num, hetrozygous_nonphased, hetrozygous_phased, genomic_length_blocks, n50]
+    stats_vcf = [homozygous0_num, homozygous1_num, hetrozygous_nonphased, hetrozygous_phased, genomic_length_blocks, n50,phase_rate]
 
 
     return lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, chrom
@@ -639,22 +644,39 @@ def report_comparison(report_out_address, comparison_result_blocks, id_blocks, c
 
 
 
-def report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf):
 
-    [homozygous0_num, homozygous1_num, hetrozygous_nonphased, hetrozygous_phased, genomic_length_blocks, n50] = stats_vcf
+def report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf, chrom):
+
+    [homozygous0_num, homozygous1_num, hetrozygous_nonphased, hetrozygous_phased, genomic_length_blocks, n50, phase_rate] = stats_vcf
+
+
+    q_list=[]
+    for block_i, block_id  in enumerate(id_blocks):
+        qual_block=qual_blocks[block_i]
+
+        if len(qual_block):
+            q_list.append(round(np.mean(qual_block),5))
+
+
 
     file_report_qc= open(report_qc_address, 'w');
 
-    #file_report_qc.write("##per chr:homozygous variants  .\n")
-    file_report_qc.write("##Block_i:\tStart_pos\tblock_length\tnum_phased_SNV\t\tblock_quality \n \n")
+
+    first_line_list=["Chromosome","N50(Kb)","Avg. phase block quality","Number of phased heterozygous variants",
+                     "Number of non-phased heterozygous variants","Number of homozygous variants","Phase rate"]
+
+
+    file_report_qc.write("##"+",\t".join(first_line_list)+"\n")
+    second_line_list=[str(chrom),str(n50),str(round(np.mean(q_list),5)),
+                      str(hetrozygous_phased),str(hetrozygous_nonphased),
+                      str(homozygous0_num+homozygous1_num),str(phase_rate)]
+    file_report_qc.write(",\t".join(first_line_list)+"\n")
+
+
+    file_report_qc.write("##Block_i,\tStart_pos,\tblock_length,\tnum_phased_SNV,\t\tblock_quality,\n \n")
     file_report_qc.write("Quality report for chromosome "+str(chrom)+":\n \n")
 
 
-    #file_report_qc.write("Number of homozygous variants is "+str(homozygous0_num+homozygous1_num)+", including "+str(homozygous0_num)+" variants with 0|0 and "+str(homozygous1_num)+" variants with 1|1:.\n")
-    #file_report_qc.write("Number of non-phased heterozygous variants is "+str(hetrozygous_nonphased)+".\n")
-    # file_report_qc.write("Number of heterozygous variants in all blocks is "+str(hetrozygous_phased)+".\n\n")
-
-    # file_report_qc.write("N50 of phase blocks is "+str(n50)+"bp.\n\n")
 
     for block_i, block_id  in enumerate(id_blocks):
 
@@ -669,12 +691,13 @@ def report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vc
 
 
 
-        file_report_qc.write(str(block_i)+":\t"+block_id+"\t"+str(genomic_length_block)+"\t"+str(len(allele_block))+"\t"+str(q))
+        file_report_qc.write(str(block_i)+",\t"+block_id+",\t"+str(genomic_length_block)+",\t"+str(len(allele_block))+",\t"+str(q))
 
         file_report_qc.write("\n") # new  block
 
     file_report_qc.close()
     return 1
+
 
 
 
