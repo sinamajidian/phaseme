@@ -1,5 +1,21 @@
 #!/usr/bin/python3
 
+
+
+
+from sys import argv
+from subprocess import check_output
+from os import path
+
+import numpy as np
+import subprocess
+import random
+
+
+
+
+
+
 def split_vcf(vcf_file, out_prefix):
 
     """
@@ -410,9 +426,10 @@ def read_vcf_file(vcf_file_address):
     n50 = values_sorted[int(ind[0])]
 
     phase_rate=np.sum(genomic_length_blocks)/ (var_pos_last-var_pos_first)
+    phase_rate=round(phase_rate,4)
 
 
-    stats_vcf = [homozygous0_num, homozygous1_num, hetrozygous_nonphased, hetrozygous_phased, genomic_length_blocks, n50,phase_rate]
+    stats_vcf = [homozygous0_num, homozygous1_num, hetrozygous_nonphased, hetrozygous_phased, genomic_length_blocks, n50, phase_rate]
 
 
     return lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, chrom
@@ -907,18 +924,6 @@ def write_out_vcf(lines_list, lines_list_improved_cut):
 
 
 
-from sys import argv
-import numpy as np
-
-import subprocess
-
-from subprocess import check_output
-import random
-
-
-from os import path
-
-
 
 
 
@@ -936,14 +941,14 @@ if __name__ == "__main__":
     """
 
 
-    # precomputed mode- only QC
-        python phaseme.py my.vcf qc precomputed
+    # precomputed mode (qc mode)
+        python phaseme.py qc my.vcf qc
 
-    # precomputed mode- imrpoving
-        python phaseme.py my.vcf improver precomputed
+    # precomputed mode- improving (phase correction mode)
+        python phaseme.py improver my.vcf improver
 
-    # Complete usage- imrpoving
-        python phaseme.py  my.vcf improver individual path_shapeit path_1000g
+    # Complete usage- improving
+        python phaseme.py  improver my.vcf improver path_shapeit path_1000g
 
         please make sure by running the following in terminal
            ls path_shapeit/shapeit
@@ -959,9 +964,9 @@ if __name__ == "__main__":
 #    mode_phasme_qc_improver = "improver"  # "improver"  "qc"
 
 
-    help_note=[ "\n   python phaseme.py my.vcf out qc        precomputed",
-            "   python phaseme.py my.vcf  out improver  precomputed",
-            "   python phaseme.py my.vcf  out improver  individual path_shapeit path_1000g",
+    help_note=[ "\n   python phaseme.py qc my.vcf out ",
+            "   python phaseme.py improver my.vcf out",
+            "   python phaseme.py improver my.vcf out path_shapeit path_1000g",
             "If you choose individual, please make sure that the followings work well in bash:  ls path_1000g/1000GP_Phase3_chr1.hap.gz; ls path_shapeit/shapeit; ./path_shapeit/shapeit;",
             "  "]
 
@@ -973,29 +978,30 @@ if __name__ == "__main__":
         exit()
 
 
-    elif len(argv)<5:
+    elif len(argv)<4:
         print("\nPlease provide enough argumnets \n \n")
         print("\n".join(help_note))
         exit()
 
-    elif len(argv)==5:
+    elif len(argv)==4:
         mode_phasme = "precomputed"
+        print("Phaseme is running in precomputed mode.")
 
-    elif len(argv)==6:
+    elif len(argv)==5:
         mode_phasme = "individual"
-        shapeit_address = argv[5]
-        data_1000G_address = argv[6]
+        shapeit_address = argv[4]
+        data_1000G_address = argv[5]
 
-    mode_phasme_qc_improver = argv[3]
-    out_prefix = argv[2]
-    vcf_file_address = argv[1]
+    mode_phasme_qc_improver = argv[1]
+    out_prefix = argv[3]
+    vcf_file_address = argv[2]
 
 
 
 
     chrs_list = split_vcf(vcf_file_address, out_prefix)        # # "In this version, the first column of the VCF file should be in this format  22  ."
     if not len(chrs_list):
-        print("The input VCF file at "+vcf_file_address+"is empty or does not exist or the first column (showing the chromosomes) is not a sole number (It shouldn't be chr1!)")
+        print("The input VCF file at "+vcf_file_address+" is empty or does not exist or the first column (showing the chromosomes) is not a sole number (It shouldn't be chr1!) or you are not running PhaseME on Linux")
         exit()
     print("Input VCF file contains "+str(len(chrs_list))+" chromosome(s) and is split into chr-based VCFs in "+out_prefix+".")
 
