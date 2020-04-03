@@ -28,8 +28,10 @@ def split_vcf(vcf_file, out_prefix):
 
         length_raw = check_output("wc -l "+out_prefix+"/temp"+i,shell=True) #","wc","-l""
 
-        length_raw2 = str(length_raw)
-        length_str = length_raw2[2:].strip().split(' ')[0]
+        #length_raw2 = str(length_raw)
+        #length_str = length_raw2[2:].strip().split(' ')[0]
+        length_raw2 = length_raw.decode('utf-8').strip()
+        length_str= length_raw2.split(' ')[0]
 
         if length_str:
             length =int(length_str)
@@ -1143,7 +1145,7 @@ if __name__ == "__main__":
             else:
                 subprocess.call("grep -v \"#\" "+vcf_file_improved_address+" >> "+out_prefix+"/improved.vcf", shell=True)
 
-        print("The QC report is ready at "+out_prefix+"/QC.vcf")
+        print("The QC report is ready at "+out_prefix+"/QC.csv")
         print("The improved VCF file is ready at "+out_prefix+"/improved.vcf")
 
 
