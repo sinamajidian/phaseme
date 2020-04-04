@@ -70,10 +70,35 @@ def split_vcf(vcf_file, out_prefix):
 
 def run_shapeit_graph(shapeit_address, data_1000G_address,out_prefix ,chrom): # run per chromosom
 
+    """
+    The following lines are run in bash script for chr 22.
+
+
+    /home/ssm/Documents/phaseme/shapeit -check --input-vcf example/out/22/chr22.vcf 
+    -R /home/ssm/Documents/phaseme/data1/1000g/1000GP_Phase3_chr22.hap.gz
+    /home/ssm/Documents/phaseme/data1/1000g/1000GP_Phase3_chr22.legend.gz
+    /home/ssm/Documents/phaseme/data1/1000g/1000GP_Phase3.sample
+    --output-log example/out/22/shapeit_check >> example/out/22/shapeit_check_out.log
+
+
+    /home/ssm/Documents/phaseme/shapeit  --input-vcf  example/out/22/chr22.vcf
+    -R /home/ssm/Documents/phaseme/data1/1000g/1000GP_Phase3_chr22.hap.gz
+    /home/ssm/Documents/phaseme/data1/1000g/1000GP_Phase3_chr22.legend.gz
+     /home/ssm/Documents/phaseme/data1/1000g/1000GP_Phase3.sample
+     -M /home/ssm/Documents/phaseme/data1/1000g/genetic_map_chr22_combined_b37.txt
+     --output-log example/out/22/shapeit_graph --output-graph example/out/22/chr22.graph
+     --exclude-snp example/out/22/shapeit_check.snp.strand.exclude
+     >> example/out/22/shapeit_graph_strand_out.log
+
+
+    """
+
+
+
     d1kg=data_1000G_address
     shapeit_check= [shapeit_address,"/shapeit -check",
                     " --input-vcf "+out_prefix+"/"+chrom+"/chr",chrom,".vcf",
-                    " -R ",d1kg,"1000GP_Phase3_chr",chrom,".hap.gz ",d1kg,"1000GP_Phase3_chr",chrom,".legend.gz ",d1kg,"1000GP_Phase3.sample",
+                    " -R ",d1kg,"/1000GP_Phase3_chr",chrom,".hap.gz ",d1kg,"/1000GP_Phase3_chr",chrom,".legend.gz ",d1kg,"/1000GP_Phase3.sample",
                     " --output-log "+out_prefix+"/",chrom,"/shapeit_check",
                     " >> "+out_prefix+"/",chrom,"/shapeit_check_out.log"]
 
@@ -83,8 +108,8 @@ def run_shapeit_graph(shapeit_address, data_1000G_address,out_prefix ,chrom): # 
 
     shapeit_graph= [shapeit_address,"/shapeit ",
                     " --input-vcf  "+out_prefix+"/"+chrom+"/chr",chrom,".vcf",
-                    " -R "+d1kg+"1000GP_Phase3_chr"+chrom+".hap.gz "+d1kg+"1000GP_Phase3_chr"+chrom+".legend.gz "+d1kg+"1000GP_Phase3.sample ",
-                    " -M "+d1kg+"genetic_map_chr"+chrom+"_combined_b37.txt",
+                    " -R "+d1kg+"/1000GP_Phase3_chr"+chrom+".hap.gz "+d1kg+"/1000GP_Phase3_chr"+chrom+".legend.gz "+d1kg+"/1000GP_Phase3.sample ",
+                    " -M "+d1kg+"/genetic_map_chr"+chrom+"_combined_b37.txt",
                     " --output-log "+out_prefix+"/",chrom+"/shapeit_graph",
                     " --output-graph "+out_prefix+"/",chrom,"/chr",chrom,".graph"]
 
@@ -987,8 +1012,10 @@ if __name__ == "__main__":
         mode_phasme = "precomputed"
         print("Phaseme is running in precomputed mode.")
 
-    elif len(argv)==5:
+    elif len(argv)==6:
+        print("Phaseme is running in individual-sepcific mode.")
         mode_phasme = "individual"
+
         shapeit_address = argv[4]
         data_1000G_address = argv[5]
 
