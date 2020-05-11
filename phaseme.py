@@ -1107,7 +1107,7 @@ if __name__ == "__main__":
             report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
 
             if chrom == chrs_list[0]:
-                subprocess.call("head -n 2 "+report_qc_address+" > "+out_prefix+"/QC.csv", shell=True)
+                subprocess.call("head -n 3 "+report_qc_address+" > "+out_prefix+"/QC.csv", shell=True)
 
             else:
                 subprocess.call("sed -n 3,3p "+report_qc_address+" >> "+out_prefix+"/QC.csv", shell=True)
