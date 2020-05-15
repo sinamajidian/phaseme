@@ -849,7 +849,7 @@ def decide_cut(id_blocks, allele_blocks, var_pos_blocks, comparison_result_block
 
 
 
-def improve_vcf_cut(lines_list_improved_flipping, id_blocks, cut_list_blocks, var_pos_blocks, var_pos_het_list): #, var_pos_het_list
+def improve_vcf_cut(lines_list_input1, id_blocks, cut_list_blocks, var_pos_blocks, var_pos_het_list): #, var_pos_het_list
 
 
     var_blockid_dic_updated = {}   # key: var_pos (genomic position of variant) value: block_id   after enforcing cuts!
@@ -877,7 +877,7 @@ def improve_vcf_cut(lines_list_improved_flipping, id_blocks, cut_list_blocks, va
         var_blockid_dic_updated[boundries_list[i]] = str(boundries_list[i-1])
 
 
-    lines_list_improved_cut = lines_list_improved_flipping
+    lines_list_improved_cut = lines_list_input1
 
     for var_i in range(len(var_pos_het_list)):
 
@@ -1494,7 +1494,9 @@ if __name__ == "__main__":
             #print(cut_list_blocks) # a list of list corresponding to the phase blocks
 
             #lines_list_improved_cut= improve_vcf_cut(lines_list, id_blocks, cut_list_blocks, var_pos_blocks)
-            lines_list_improved_cut=improve_vcf_cut(lines_list_improved_flipping, id_blocks, cut_list_blocks, var_pos_blocks, var_pos_het_list)
+			#lines_list_improved_cut=improve_vcf_cut(lines_list_improved_flipping, id_blocks, cut_list_blocks, var_pos_blocks, var_pos_het_list)
+
+            lines_list_improved_cut=improve_vcf_cut(lines_list, id_blocks, cut_list_blocks, var_pos_blocks, var_pos_het_list)
             vcf_file_improved_address_chr = vcf_file_address_chr[:-4]+'_improved.vcf'
             write_out_vcf(vcf_file_improved_address_chr, lines_list_improved_cut)
 
