@@ -50,15 +50,17 @@ python phaseme.py improver my.vcf output_prefix  /path/to/shapeit /path/to/1000G
 
 ## Parental mode
 
-PhaseME can improve the phasings using parental data instead of linkage information. The user should prepare a three-sample VCF containing son, mother and father. It can be done using `bcftools merge`. Prior to that you may need `bgzip`, `tabix` and `bcftools index` on all three samples. 
+PhaseME can also assess and improve the phasings results using parental data instead of linkage information. The user should prepare a three-sample VCF including son, mother and father SNV in this order. This can be done using e.g. `bcftools merge`. Prior to that you may need `bgzip`, `tabix` and `bcftools index` on all three samples. 
 
+To obtain QC insights:
+```
+python phaseme.py qc example/trio.vcf example/out_trio trio
+```
 
+Once you want to imporve phasing results:
 ```
 python phaseme.py improver example/trio.vcf example/out_trio trio
 ```
-
-If you only want to have the QC report use `qc` instead of `improver`.
-
 
 
 
