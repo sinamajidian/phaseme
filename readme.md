@@ -54,7 +54,7 @@ PhaseME can improve the phasings using parental data. The user should prepare a 
 
 
 ```
-python phaseme.py improver my.vcf output_prefix  trio
+python phaseme.py improver example/trio.vcf example/out_trio trio
 ```
 
 If you only want to have the QC report use `qc` instead of `improver`.
