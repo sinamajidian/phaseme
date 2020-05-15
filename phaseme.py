@@ -39,6 +39,9 @@ def split_vcf(vcf_file, out_prefix):
     for i in range(1,23):
         i=str(i)
 
+	# PhaseME in improver mode needs shapeit which can solely be run on Linux.
+	# PhaseME in QC mode can be run on MAC if you remove `-P` in the following line. 
+	
         extract_chri_bash = "grep -P \"^"+i+"\t\" "+out_prefix+"/input.vcf > "+out_prefix+"/temp"+i
         subprocess.call(extract_chri_bash, shell=True)
 
