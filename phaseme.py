@@ -1022,12 +1022,12 @@ def read_trio_vcf_file(vcf_file_address):
             allele_father = values_genotype_father_splitted[gt_index]
 
 
-            #  ## how should we handle '2' in allele ?
-            #              if './.' in allele:
-            #                  print("There is a vriant with genomic position "+str(var_pos)+" that is not genotyped. Remove it first.")
-            #                  exit(1)
+#             ## how should we handle '2' in allele ?
+#              if './.' in allele:
+#                  print("There is a vriant with genomic position "+str(var_pos)+" that is not genotyped. Remove it first.")
+#                  exit(1)
 
-            #             ## if '/' in allele: print("There is a vriant with genomic position "+str(var_pos)+" that is not phased. Remove it first.")
+#             ## if '/' in allele: print("There is a vriant with genomic position "+str(var_pos)+" that is not phased. Remove it first.")
 
             if allele_son == '0/1' or allele_son == '1/0':
                 hetrozygous_nonphased += 1
@@ -1250,9 +1250,12 @@ def improve_vcf_trio(lines_list, id_blocks, allele_son_gold_blocks, var_pos_bloc
             #lines_list_improved[line_number-1]  = '\t'.join(line_parts)
 
         line = '\t'.join(line_parts)
-        #         line = '\t'.join(line_parts[:-2])
+#         line = '\t'.join(line_parts[:-2])
 
         lines_list_improved[line_number-1]=line
+
+
+
 
 
     return lines_list_improved
@@ -1402,7 +1405,7 @@ if __name__ == "__main__":
 
             pop_inf_dic = read_file_pairs_forward(file_pairs_address)
 
-            out_name_prefix= vcf_file_address_chr[:-4] #argv[3]  #
+            out_name_prefix_chr= vcf_file_address_chr[:-4] #argv[3]  #
 
             # comparing input phased vcf (hap_blocks_sample1_dic) with pop (short_blocks_dic_pos)
             comparison_result_blocks=[]
@@ -1421,19 +1424,20 @@ if __name__ == "__main__":
                 comparison_result_block = compare_phase_block_pop(allele_block, var_pos_block, pop_inf_dic, lower_bound, upper_bound)
                 comparison_result_blocks.append(comparison_result_block)
 
-            report_out_address=out_name_prefix+'_comparison.txt'
+            report_out_address_chr=out_name_prefix_chr+'_comparison.txt'
 
-            qual_blocks = report_comparison(report_out_address, comparison_result_blocks, id_blocks, chrom)
+            qual_blocks = report_comparison(report_out_address_chr, comparison_result_blocks, id_blocks, chrom)
 
-            report_qc_address=out_name_prefix+'_qc.txt'
-            report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
+            report_qc_address_chr=out_name_prefix_chr+'_qc.txt'
+            report_qc(report_qc_address_chr, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
 
             if chrom == chrs_list[0]:
-                subprocess.call("head -n 3 "+report_qc_address+" > "+out_prefix+"/QC.csv", shell=True)
+                subprocess.call("head -n 3 "+report_qc_address_chr+" > "+out_prefix+"/QC.csv", shell=True)
 
             else:
-                subprocess.call("sed -n 3,3p "+report_qc_address+" >> "+out_prefix+"/QC.csv", shell=True)
+                subprocess.call("sed -n 3,3p "+report_qc_address_chr+" >> "+out_prefix+"/QC.csv", shell=True)
 
+            print("The QC report is ready at "+out_prefix+"/QC.csv")
 
 
     elif mode_phasme_qc_improver == "improver" and (mode_phasme == "precomputed" or mode_phasme == "individual"):
@@ -1447,11 +1451,11 @@ if __name__ == "__main__":
             lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, chrom = read_vcf_file(vcf_file_address_chr)
             #print(len(var_pos_het_list))
 
-            file_pairs_address = out_prefix+"/"+chrom+"/"+chrom+"_pairs.txt"
+            file_pairs_address_chr = out_prefix+"/"+chrom+"/"+chrom+"_pairs.txt"
 
-            pop_inf_dic = read_file_pairs_forward(file_pairs_address)
+            pop_inf_dic = read_file_pairs_forward(file_pairs_address_chr)
 
-            out_name_prefix= vcf_file_address_chr[:-4] #argv[3]  #
+            out_name_prefix_chr= vcf_file_address_chr[:-4] #argv[3]  #
 
             # comparing input phased vcf (hap_blocks_sample1_dic) with pop (short_blocks_dic_pos)
             comparison_result_blocks=[]
@@ -1471,18 +1475,18 @@ if __name__ == "__main__":
                 comparison_result_blocks.append(comparison_result_block)
 
 
-            report_out_address=out_name_prefix+'_comparison.txt'
+            report_out_address_chr=out_name_prefix_chr+'_comparison.txt'
 
-            qual_blocks = report_comparison(report_out_address, comparison_result_blocks, id_blocks, chrom)
+            qual_blocks = report_comparison(report_out_address_chr, comparison_result_blocks, id_blocks, chrom)
 
-            report_qc_address=out_name_prefix+'_qc.txt'
-            report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
+            report_qc_address_chr=out_name_prefix_chr+'_qc.txt'
+            report_qc(report_qc_address_chr, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
 
             if chrom == chrs_list[0]:
-                subprocess.call("head -n 3 "+report_qc_address+" > "+out_prefix+"/QC.csv", shell=True)
+                subprocess.call("head -n 3 "+report_qc_address_chr+" > "+out_prefix+"/QC.csv", shell=True)
 
             else:
-                subprocess.call("sed -n 3,3p "+report_qc_address+" >> "+out_prefix+"/QC.csv", shell=True)
+                subprocess.call("sed -n 3,3p "+report_qc_address_chr+" >> "+out_prefix+"/QC.csv", shell=True)
 
 
 
@@ -1491,14 +1495,14 @@ if __name__ == "__main__":
 
             #lines_list_improved_cut= improve_vcf_cut(lines_list, id_blocks, cut_list_blocks, var_pos_blocks)
             lines_list_improved_cut=improve_vcf_cut(lines_list_improved_flipping, id_blocks, cut_list_blocks, var_pos_blocks, var_pos_het_list)
-            vcf_file_improved_address = vcf_file_address_chr[:-4]+'_improved.vcf'
-            write_out_vcf(vcf_file_improved_address, lines_list_improved_cut)
+            vcf_file_improved_address_chr = vcf_file_address_chr[:-4]+'_improved.vcf'
+            write_out_vcf(vcf_file_improved_address_chr, lines_list_improved_cut)
 
             if chrom == chrs_list[0]:
-                subprocess.call("cat "+vcf_file_improved_address+" > "+out_prefix+"/improved.vcf", shell=True)
+                subprocess.call("cat "+vcf_file_improved_address_chr+" > "+out_prefix+"/improved.vcf", shell=True)
 
             else:
-                subprocess.call("grep -v \"#\" "+vcf_file_improved_address+" >> "+out_prefix+"/improved.vcf", shell=True)
+                subprocess.call("grep -v \"#\" "+vcf_file_improved_address_chr+" >> "+out_prefix+"/improved.vcf", shell=True)
 
         print("The QC report is ready at "+out_prefix+"/QC.csv")
         print("The improved VCF file is ready at "+out_prefix+"/improved.vcf")
@@ -1514,6 +1518,7 @@ if __name__ == "__main__":
             print("working on chromosome ", chrom)
 
             vcf_file_address_chr = out_prefix+"/"+chrom+"/chr"+chrom+".vcf"
+            out_name_prefix_chr= vcf_file_address_chr[:-4]
 
             try:
                 lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, chrom , allele_mother_blocks , allele_father_blocks = read_trio_vcf_file(vcf_file_address_chr)
@@ -1522,16 +1527,16 @@ if __name__ == "__main__":
             #print(len(var_pos_het_list))
             allele_son_gold_blocks, qual_blocks =compare_trio(allele_blocks,allele_mother_blocks,allele_father_blocks)
 
-            report_qc_address=out_name_prefix+'_qc.txt'
-            report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
+            report_qc_address_chr=out_name_prefix_chr+'_qc.txt'
+            report_qc(report_qc_address_chr, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
 
             if chrom == chrs_list[0]:
-                subprocess.call("head -n 3 "+report_qc_address+" > "+out_prefix+"/QC.csv", shell=True)
+                subprocess.call("head -n 3 "+report_qc_address_chr+" > "+out_prefix+"/QC.csv", shell=True)
 
             else:
-                subprocess.call("sed -n 3,3p "+report_qc_address+" >> "+out_prefix+"/QC.csv", shell=True)
+                subprocess.call("sed -n 3,3p "+report_qc_address_chr+" >> "+out_prefix+"/QC.csv", shell=True)
 
-
+            print("The QC report is ready at "+out_prefix+"/QC.csv")
 
     elif mode_phasme_qc_improver == "improver" and mode_phasme == "trio" :
 
@@ -1540,32 +1545,34 @@ if __name__ == "__main__":
 
             print("working on chromosome ", chrom)
 
-            vcf_file_address = out_prefix+"/"+chrom+"/chr"+chrom+".vcf"
+            vcf_file_address_chr = out_prefix+"/"+chrom+"/chr"+chrom+".vcf"
+            out_name_prefix_chr= vcf_file_address_chr[:-4]
+
             lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, chrom , allele_mother_blocks , allele_father_blocks = read_trio_vcf_file(vcf_file_address)
             #print(len(var_pos_het_list))
             allele_son_gold_blocks, qual_blocks =compare_trio(allele_blocks,allele_mother_blocks,allele_father_blocks)
 
-            report_qc_address=out_name_prefix+'_qc.txt'
-            report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
+            report_qc_address_chr=out_name_prefix_chr+'_qc.txt'
+            report_qc(report_qc_address_chr, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
 
             if chrom == chrs_list[0]:
-                subprocess.call("head -n 3 "+report_qc_address+" > "+out_prefix+"/QC.csv", shell=True)
+                subprocess.call("head -n 3 "+report_qc_address_chr+" > "+out_prefix+"/QC.csv", shell=True)
 
             else:
-                subprocess.call("sed -n 3,3p "+report_qc_address+" >> "+out_prefix+"/QC.csv", shell=True)
+                subprocess.call("sed -n 3,3p "+report_qc_address_chr+" >> "+out_prefix+"/QC.csv", shell=True)
 
 
             lines_list_improved= improve_vcf_trio(lines_list, id_blocks, allele_son_gold_blocks, var_pos_blocks, var_pos_het_list)
 
 
-            vcf_file_improved_address = vcf_file_address[:-4]+'_improved.vcf'
-            write_out_vcf(vcf_file_improved_address, lines_list_improved_cut)
+            vcf_file_improved_address_chr = vcf_file_address_chr[:-4]+'_improved.vcf'
+            write_out_vcf(vcf_file_improved_address_chr, lines_list_improved)
 
             if chrom == chrs_list[0]:
-                subprocess.call("cat "+vcf_file_improved_address+" > "+out_prefix+"/improved.vcf", shell=True)
+                subprocess.call("cat "+vcf_file_improved_address_chr+" > "+out_prefix+"/improved.vcf", shell=True)
 
             else:
-                subprocess.call("grep -v \"#\" "+vcf_file_improved_address+" >> "+out_prefix+"/improved.vcf", shell=True)
+                subprocess.call("grep -v \"#\" "+vcf_file_improved_address_chr+" >> "+out_prefix+"/improved.vcf", shell=True)
 
         print("The QC report is ready at "+out_prefix+"/QC.csv")
         print("The improved VCF file is ready at "+out_prefix+"/improved.vcf")
