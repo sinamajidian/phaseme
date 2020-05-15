@@ -39,9 +39,9 @@ def split_vcf(vcf_file, out_prefix):
     for i in range(1,23):
         i=str(i)
 
-	# PhaseME in improver mode needs shapeit which can solely be run on Linux.
-	# PhaseME in QC mode can be run on MAC if you remove `-P` in the following line. 
-	
+    # PhaseME in improver mode needs shapeit which can solely be run on Linux.
+    # PhaseME in QC mode can be run on MAC if you remove `-P` in the following line.
+
         extract_chri_bash = "grep -P \"^"+i+"\t\" "+out_prefix+"/input.vcf > "+out_prefix+"/temp"+i
         subprocess.call(extract_chri_bash, shell=True)
 
@@ -946,8 +946,8 @@ def read_trio_vcf_file(vcf_file_address):
             allele_blocks: list of list
             var_pos_blocks: list of list
             stats_vcf = [homozygous0_num, homozygous1_num, hetrozygous_nonphased, hetrozygous_phased, genomic_length_blocks, n50,phase_rate]
-			allele_mother_blocks
-			allele_father_blocks
+            allele_mother_blocks
+            allele_father_blocks
     """
 
 
@@ -1022,12 +1022,12 @@ def read_trio_vcf_file(vcf_file_address):
             allele_father = values_genotype_father_splitted[gt_index]
 
 
-#             ## how should we handle '2' in allele ?
-#              if './.' in allele:
-#                  print("There is a vriant with genomic position "+str(var_pos)+" that is not genotyped. Remove it first.")
-#                  exit(1)
+            #  ## how should we handle '2' in allele ?
+            #              if './.' in allele:
+            #                  print("There is a vriant with genomic position "+str(var_pos)+" that is not genotyped. Remove it first.")
+            #                  exit(1)
 
-#             ## if '/' in allele: print("There is a vriant with genomic position "+str(var_pos)+" that is not phased. Remove it first.")
+            #             ## if '/' in allele: print("There is a vriant with genomic position "+str(var_pos)+" that is not phased. Remove it first.")
 
             if allele_son == '0/1' or allele_son == '1/0':
                 hetrozygous_nonphased += 1
@@ -1129,14 +1129,15 @@ def read_trio_vcf_file(vcf_file_address):
 
 def compare_trio(allele_blocks, allele_mother_blocks, allele_father_blocks):
 
-	"""
-	Compare the alleles of trio (son, mother and father)
+    """
+    Compare the alleles of trio (son, mother and father)
 
-	outputs:
-	allele_son_gold_blocks
-	qual_blocks
+    outputs:
+    allele_son_gold_blocks
+    qual_blocks
 
-	"""
+    """
+
     allele_son_gold_blocks=[]
     qual_blocks = []
 
@@ -1189,15 +1190,15 @@ def compare_trio(allele_blocks, allele_mother_blocks, allele_father_blocks):
 def improve_vcf_trio(lines_list, id_blocks, allele_son_gold_blocks, var_pos_blocks, var_pos_het_list):
 
 
-	"""
-	Improving the phased vcf using the parental data (summarized in allele_son_gold_blocks)
+    """
+    Improving the phased vcf using the parental data (summarized in allele_son_gold_blocks)
 
-		by doing so, the phase block doesn't change. for those variant which is in parental data, the phasing is changed accrodingly.
+        by doing so, the phase block doesn't change. for those variant which is in parental data, the phasing is changed accrodingly.
 
-	output:
-		lines_list_improved (improved version of vcf)
+    output:
+        lines_list_improved (improved version of vcf)
 
-	"""
+    """
 
     lines_list_improved=lines_list
     var_allele_dic_updated = {}   # key: var_pos (genomic position of variant) value: block_id   after enforcing cuts!
@@ -1249,12 +1250,9 @@ def improve_vcf_trio(lines_list, id_blocks, allele_son_gold_blocks, var_pos_bloc
             #lines_list_improved[line_number-1]  = '\t'.join(line_parts)
 
         line = '\t'.join(line_parts)
-#         line = '\t'.join(line_parts[:-2])
+        #         line = '\t'.join(line_parts[:-2])
 
         lines_list_improved[line_number-1]=line
-
-
-
 
 
     return lines_list_improved
@@ -1336,10 +1334,10 @@ if __name__ == "__main__":
         shapeit_address = argv[4]
         data_1000G_address = argv[5]
 
-	elif len(argv)==5:
-    	mode_phasme = "trio"
-		if argv[4] != mode_phasme:
-			print("\nPlease mention the correct order of arguments. If you want to run in parental mode, specify the last argument as    trio \n \n")
+    elif len(argv)==5:
+        mode_phasme = "trio"
+        if argv[4] != mode_phasme:
+            print("\nPlease mention the correct order of arguments. If you want to run in parental mode, specify the last argument as    trio \n \n")
 
     print("Phaseme is running in ", mode_phasme ," mode.")
 
@@ -1367,7 +1365,7 @@ if __name__ == "__main__":
 
         print("In case of error, please check the shapeit log files in subfolders as well.")
         pair_linkage(chrs_list, shapeit_address, data_1000G_address, num_samples)
-		# print("In case of error, make srue that all variants in VCF file are bi-allelic. (Alternative allele shouldn't contain a comma)")
+        # print("In case of error, make srue that all variants in VCF file are bi-allelic. (Alternative allele shouldn't contain a comma)")
 
 
 
@@ -1492,7 +1490,7 @@ if __name__ == "__main__":
             #print(cut_list_blocks) # a list of list corresponding to the phase blocks
 
             #lines_list_improved_cut= improve_vcf_cut(lines_list, id_blocks, cut_list_blocks, var_pos_blocks)
-			lines_list_improved_cut=improve_vcf_cut(lines_list_improved_flipping, id_blocks, cut_list_blocks, var_pos_blocks, var_pos_het_list)
+            lines_list_improved_cut=improve_vcf_cut(lines_list_improved_flipping, id_blocks, cut_list_blocks, var_pos_blocks, var_pos_het_list)
             vcf_file_improved_address = vcf_file_address_chr[:-4]+'_improved.vcf'
             write_out_vcf(vcf_file_improved_address, lines_list_improved_cut)
 
@@ -1517,12 +1515,12 @@ if __name__ == "__main__":
 
             vcf_file_address_chr = out_prefix+"/"+chrom+"/chr"+chrom+".vcf"
 
-			try:
-				lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, chrom , allele_mother_blocks , allele_father_blocks = read_trio_vcf_file(vcf_file_address_chr)
-			except:
-  				print("Are you sure that input vcf file contains three samples?")
+            try:
+                lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, chrom , allele_mother_blocks , allele_father_blocks = read_trio_vcf_file(vcf_file_address_chr)
+            except:
+                  print("Are you sure that input vcf file contains three samples?")
             #print(len(var_pos_het_list))
-			allele_son_gold_blocks, qual_blocks =compare_trio(allele_blocks,allele_mother_blocks,allele_father_blocks)
+            allele_son_gold_blocks, qual_blocks =compare_trio(allele_blocks,allele_mother_blocks,allele_father_blocks)
 
             report_qc_address=out_name_prefix+'_qc.txt'
             report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
@@ -1543,9 +1541,9 @@ if __name__ == "__main__":
             print("working on chromosome ", chrom)
 
             vcf_file_address = out_prefix+"/"+chrom+"/chr"+chrom+".vcf"
-			lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, chrom , allele_mother_blocks , allele_father_blocks = read_trio_vcf_file(vcf_file_address)
+            lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, chrom , allele_mother_blocks , allele_father_blocks = read_trio_vcf_file(vcf_file_address)
             #print(len(var_pos_het_list))
-			allele_son_gold_blocks, qual_blocks =compare_trio(allele_blocks,allele_mother_blocks,allele_father_blocks)
+            allele_son_gold_blocks, qual_blocks =compare_trio(allele_blocks,allele_mother_blocks,allele_father_blocks)
 
             report_qc_address=out_name_prefix+'_qc.txt'
             report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
@@ -1557,10 +1555,10 @@ if __name__ == "__main__":
                 subprocess.call("sed -n 3,3p "+report_qc_address+" >> "+out_prefix+"/QC.csv", shell=True)
 
 
-			lines_list_improved= improve_vcf_trio(lines_list, id_blocks, allele_son_gold_blocks, var_pos_blocks, var_pos_het_list)
+            lines_list_improved= improve_vcf_trio(lines_list, id_blocks, allele_son_gold_blocks, var_pos_blocks, var_pos_het_list)
 
 
-			vcf_file_improved_address = vcf_file_address[:-4]+'_improved.vcf'
+            vcf_file_improved_address = vcf_file_address[:-4]+'_improved.vcf'
             write_out_vcf(vcf_file_improved_address, lines_list_improved_cut)
 
             if chrom == chrs_list[0]:
