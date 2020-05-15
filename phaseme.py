@@ -74,7 +74,7 @@ def run_shapeit_graph(shapeit_address, data_1000G_address,out_prefix ,chrom): # 
     The following lines are run in bash script for chr 22.
 
 
-    /home/ssm/Documents/phaseme/shapeit -check --input-vcf example/out/22/chr22.vcf 
+    /home/ssm/Documents/phaseme/shapeit -check --input-vcf example/out/22/chr22.vcf
     -R /home/ssm/Documents/phaseme/data1/1000g/1000GP_Phase3_chr22.hap.gz
     /home/ssm/Documents/phaseme/data1/1000g/1000GP_Phase3_chr22.legend.gz
     /home/ssm/Documents/phaseme/data1/1000g/1000GP_Phase3.sample
@@ -713,7 +713,7 @@ def report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vc
 
 
     file_report_qc.write("##"+",\t".join(first_line_list)+"\n\n")
-    second_line_list=[str(chrom),str(n50),str(round(np.mean(q_list),5)),
+    second_line_list=[str(chrom),str(n50/1000),str(round(np.mean(q_list),5)),
                       str(hetrozygous_phased),str(hetrozygous_nonphased),
                       str(homozygous0_num+homozygous1_num),str(phase_rate)]
     file_report_qc.write(",\t".join(second_line_list)+"\n\n")
@@ -846,7 +846,7 @@ def decide_cut(id_blocks, allele_blocks, var_pos_blocks, comparison_result_block
 
 
 
-def improve_vcf_cut(lines_list_improved_flipping, id_blocks, cut_list_blocks, var_pos_blocks):
+def improve_vcf_cut(lines_list_improved_flipping, id_blocks, cut_list_blocks, var_pos_blocks, var_pos_het_list): #, var_pos_het_list
 
 
     var_blockid_dic_updated = {}   # key: var_pos (genomic position of variant) value: block_id   after enforcing cuts!
@@ -909,7 +909,7 @@ def improve_vcf_cut(lines_list_improved_flipping, id_blocks, cut_list_blocks, va
 
 
 
-def write_out_vcf(lines_list, lines_list_improved_cut):
+def write_out_vcf(vcf_file_improved_address, lines_list_improved_cut):
 
     vcf_file_improved = open(vcf_file_improved_address,'w');  # phased_vcf_dic
 
@@ -926,6 +926,255 @@ def write_out_vcf(lines_list, lines_list_improved_cut):
 
 
 
+### parental mode
+
+
+
+def read_trio_vcf_file(vcf_file_address):
+
+    """
+    Reading the vcf file contiaing trio, son, mother, and father
+    input: vcf file
+    outputs:
+            lines_list: list of string. each string is a line of phased vcf file.
+            var_pos_het_list: genomic position of phased hetrozygous variants in the vcf file.
+            line_number_het_list: list of line numbers in the vcf file that are phased hetrozygous variant (needed in phasing)
+            id_blocks: list of ids of phas blocks
+            allele_blocks: list of list
+            var_pos_blocks: list of list
+            stats_vcf = [homozygous0_num, homozygous1_num, hetrozygous_nonphased, hetrozygous_phased, genomic_length_blocks, n50,phase_rate]
+			allele_mother_blocks
+			allele_father_blocks
+    """
+
+
+
+
+    vcf_file = open(vcf_file_address,'r')
+
+    lines_list=[]                  #  lines  of phased vcf  needed for reporting improved VCF
+    var_pos_het_list=[]                # position of phased hetrozygous variants all blocks consequently.
+
+    # The followings are for phased hetrozygous variants.
+    id_blocks = []                 # list of list. Outer list corresponds to phase block. Inner list contains block_id
+    allele_blocks = []             # list of list. Outer list corresponds to phase block. Inner list contains alleles of hetro variants
+    var_pos_blocks = []            # list of list. Outer list corresponds to phase block. Inner list contains genomic positions of hetro variants
+
+    allele_father_blocks =[]
+    allele_mother_blocks =[]
+
+    line_number_het_list = []            # line number of phased hetrozygous variant. We need it for reporting improved version
+    lines_list = []
+
+    first_het_variant = True
+    line_number = 0
+
+    homozygous0_num = 0
+    homozygous1_num = 0
+    hetrozygous_nonphased = 0
+    hetrozygous_phased = 0
+    first_first= True
+
+
+    for line in vcf_file:
+
+        line_number += 1
+
+        line_strip = line.strip()
+        lines_list.append(line_strip)
+
+        if line_strip.startswith('#'):
+            pass
+            #header_lines_list.append(line_strip)
+            #sample_names = line_strip.split('\t')[9:11]            # last line of header contains sample name
+        else:
+
+            line_parts=line_strip.split('\t')
+
+            chrom = line_parts[0]
+
+            var_pos = int(line_parts[1])                           # genomic position of variants
+            if first_first==True:
+                var_pos_first=var_pos
+                first_first=False
+
+            ref_allele = line_parts[3]
+            alt_allele = line_parts[4]
+
+            format_genotype = line_parts[8]                          #  'GT:GQ:DP:AF:GL:PS',
+            format_genotype_splitted = format_genotype.split(':')
+
+
+            values_genotype_son = line_parts[9]                  # first sample '0|1:255:.:.:.,0,.:60780'
+            values_genotype_son_splitted = values_genotype_son.split(':')
+            gt_index = format_genotype_splitted.index("GT")            #  index of allele in  values_genotype
+            allele_son = values_genotype_son_splitted[gt_index]
+
+            values_genotype_mother = line_parts[10]
+            values_genotype_mother_splitted = values_genotype_mother.split(':')
+            allele_mother = values_genotype_mother_splitted[gt_index]
+
+            values_genotype_father = line_parts[11]
+            values_genotype_father_splitted = values_genotype_father.split(':')
+            allele_father = values_genotype_father_splitted[gt_index]
+
+
+#             ## how should we handle '2' in allele ?
+#              if './.' in allele:
+#                  print("There is a vriant with genomic position "+str(var_pos)+" that is not genotyped. Remove it first.")
+#                  exit(1)
+
+#             ## if '/' in allele: print("There is a vriant with genomic position "+str(var_pos)+" that is not phased. Remove it first.")
+
+            if allele_son == '0/1' or allele_son == '1/0':
+                hetrozygous_nonphased += 1
+
+            if allele_son == '0|0' or allele_son == '0/0':
+                homozygous0_num += 1
+
+            if allele_son == '1|1' or allele_son == '1/1':
+                homozygous1_num += 1
+
+
+            if (allele_son == '0|1' or allele_son == '1|0'):
+                # print(allele_son)
+
+                hetrozygous_phased += 1
+
+                var_pos_het_list.append(var_pos)
+
+                line_number_het_list.append(line_number)
+
+                ps_index = format_genotype_splitted.index("PS")           #  index of phase set in values_genotype
+                id_block = values_genotype_son_splitted[ps_index]
+
+
+                if first_het_variant:           # for the first het variant
+                    first_het_variant = False
+
+                    allele_block = [allele_son]
+
+                    allele_father_block = [allele_father]
+                    allele_mother_block = [allele_mother]
+
+                    var_pos_block = [int(var_pos)]
+                    id_blocks.append(id_block)
+
+
+                else:                              # for the rest of het variants
+                    if id_block in id_blocks:
+                        allele_block.append(allele_son)
+
+                        allele_father_block.append(allele_father)
+                        allele_mother_block.append(allele_mother)
+
+                        var_pos_block.append(int(var_pos))
+
+                    else:
+
+                        # add previous block to the list of all blocks
+                        allele_blocks.append(allele_block)
+
+                        allele_father_blocks.append(allele_father_block)
+                        allele_mother_blocks.append(allele_mother_block)
+
+                        var_pos_blocks.append(var_pos_block)
+
+                        # creat new phase block
+                        allele_block = [allele_son]
+
+                        allele_father_block = [allele_father]
+                        allele_mother_block = [allele_mother]
+
+                        var_pos_block = [int(var_pos)]
+                        id_blocks.append(id_block)
+
+
+    var_pos_last=var_pos
+    # # for the last het variant, we  finish the last block.
+    allele_blocks.append(allele_block)
+    var_pos_blocks.append(var_pos_block)
+    allele_father_blocks.append(allele_father_block)
+    allele_mother_blocks.append(allele_mother_block)
+
+
+    genomic_length_blocks = []
+
+    for var_pos_block in var_pos_blocks:
+        genomic_length_blocks.append(var_pos_block[-1]-var_pos_block[0])
+
+    values_sorted = sorted(genomic_length_blocks, reverse=True)
+    csum = np.cumsum(values_sorted)
+
+    n2 = int(sum(values_sorted)/2)
+    csumn2 = min(csum[csum >= n2])
+    ind = np.where(csum == csumn2)
+    n50 = values_sorted[int(ind[0])]
+
+    phase_rate=np.sum(genomic_length_blocks)/ (var_pos_last-var_pos_first)
+    phase_rate=round(phase_rate,4)
+
+
+    stats_vcf = [homozygous0_num, homozygous1_num, hetrozygous_nonphased, hetrozygous_phased, genomic_length_blocks, n50, phase_rate]
+
+    return lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, chrom , allele_mother_blocks , allele_father_blocks
+
+
+
+
+
+
+def compare_trio(allele_blocks, allele_mother_blocks, allele_father_blocks):
+
+	"""
+	Compare the alleles of trio (son, mother and father)
+
+	outputs:
+	allele_son_gold_blocks
+	qual_blocks
+
+	"""
+    allele_son_gold_blocks=[]
+    qual_blocks = []
+
+    for k in range(len(allele_blocks)):
+        allele_son_gold_block=[]
+        allele_son_block = allele_blocks[k]
+        allele_mother_block = allele_mother_blocks[k]
+        allele_father_block = allele_father_blocks[k]
+
+        num_match=0
+        for i in range(len(allele_son_block)):
+            allele_son = allele_son_block[i]
+            allele_mother = allele_mother_block[i]
+            allele_father = allele_father_block[i]
+
+            allele_son_gold ='./.'
+            if  allele_mother != './.' and (not allele_mother == '0/0') and (not allele_mother == '0|0') and allele_father == './.' :
+                allele_son_gold = '0|1'
+                if allele_son_gold==allele_son :
+                    num_match +=1
+
+
+            if  allele_father != './.' and (not allele_father == '0/0') and (not allele_father == '0|0') and allele_mother == './.' :
+                allele_son_gold = '1|0'
+                if allele_son_gold==allele_son :
+                    num_match +=1
+
+            allele_son_gold_block.append(allele_son_gold)
+
+        if num_match< len(allele_son_block)-num_match: # all  son_gold should be flipped
+            allele_son_gold_block_edited=[]
+            for allele in allele_son_gold_block :
+                if allele=='./.':
+                    allele_son_gold_block_edited.append(allele)
+                else:
+                    allele_son_gold_block_edited.append(str(1-int(allele[0]))+'|'+str(1-int(allele[2])))
+        allele_son_gold_blocks.append(allele_son_gold_block)
+        qual_block=[max(num_match, len(allele_son_block)-num_match)/len(allele_son_block)]
+        qual_blocks.append(qual_block)
+
+    return allele_son_gold_blocks , qual_blocks
 
 
 
@@ -934,7 +1183,78 @@ def write_out_vcf(lines_list, lines_list_improved_cut):
 
 
 
+def improve_vcf_trio(lines_list, id_blocks, allele_son_gold_blocks, var_pos_blocks, var_pos_het_list):
 
+
+	"""
+	Improving the phased vcf using the parental data (summarized in allele_son_gold_blocks)
+
+		by doing so, the phase block doesn't change. for those variant which is in parental data, the phasing is changed accrodingly.
+
+	output:
+		lines_list_improved (improved version of vcf)
+
+	"""
+
+    lines_list_improved=lines_list
+    var_allele_dic_updated = {}   # key: var_pos (genomic position of variant) value: block_id   after enforcing cuts!
+
+
+    for block_i, block_id in enumerate(id_blocks):
+
+        var_pos_block = var_pos_blocks[block_i] # these ar only only het
+        allele_son_gold_block= allele_son_gold_blocks[block_i]
+        #print(block_id, len(var_pos_block),len(allele_son_gold_block))
+
+        for var_k in range(len(var_pos_block)):
+            allele_son_gold=allele_son_gold_block[var_k]
+            var_pos=var_pos_block[var_k]
+
+            if allele_son_gold != './.':
+                var_allele_dic_updated[var_pos] = allele_son_gold
+
+
+    for var_i in range(len(var_pos_het_list)):
+
+        var_pos = var_pos_het_list[var_i]
+
+
+
+        line_number = line_number_het_list[var_i]   # 1-based line number
+
+        line = lines_list[line_number-1]            # 0-based  list
+
+        line_parts = line.split('\t')
+
+        format_genotype, values_genotype = line_parts[8:10]    # 'GT:GQ:DP:AF:GL:PS', '0|1:255:.:.:.,0,.:60780'
+
+        values_genotype_splitted = values_genotype.split(':')
+        format_genotype_splitted = format_genotype.split(':')
+
+        gt_index = format_genotype_splitted.index("GT")           #  index of allele in  values_genotype
+        ps_index = format_genotype_splitted.index("PS")
+
+        allele = values_genotype_splitted[gt_index]
+
+        if var_pos in var_allele_dic_updated:
+            allele_updated = var_allele_dic_updated[var_pos]
+
+            values_genotype_splitted[gt_index] = allele_updated
+
+            line_parts[9] = ':'.join(values_genotype_splitted)
+
+            #lines_list_improved[line_number-1]  = '\t'.join(line_parts)
+
+        line = '\t'.join(line_parts)
+#         line = '\t'.join(line_parts[:-2])
+
+        lines_list_improved[line_number-1]=line
+
+
+
+
+
+    return lines_list_improved
 
 
 
@@ -997,11 +1317,8 @@ if __name__ == "__main__":
 
 
     if len(argv)==1:
-
-
         print("\n".join(help_note))
         exit()
-
 
     elif len(argv)<4:
         print("\nPlease provide enough argumnets \n \n")
@@ -1010,14 +1327,18 @@ if __name__ == "__main__":
 
     elif len(argv)==4:
         mode_phasme = "precomputed"
-        print("Phaseme is running in precomputed mode.")
 
     elif len(argv)==6:
-        print("Phaseme is running in individual-sepcific mode.")
         mode_phasme = "individual"
-
         shapeit_address = argv[4]
         data_1000G_address = argv[5]
+
+	elif len(argv)==5:
+    	mode_phasme = "trio"
+		if argv[4] != mode_phasme:
+			print("\nPlease mention the correct order of arguments. If you want to run in parental mode, specify the last argument as    trio \n \n")
+
+    print("Phaseme is running in ", mode_phasme ," mode.")
 
     mode_phasme_qc_improver = argv[1]
     out_prefix = argv[3]
@@ -1030,7 +1351,7 @@ if __name__ == "__main__":
     if not len(chrs_list):
         print("The input VCF file at "+vcf_file_address+" is empty or does not exist or the first column (showing the chromosomes) is not a sole number (It shouldn't be chr1!) or you are not running PhaseME on Linux")
         exit()
-    print("Input VCF file contains "+str(len(chrs_list))+" chromosome(s) and is split into chr-based VCFs in "+out_prefix+".")
+    print("Input VCF file contains "+str(len(chrs_list))+" chromosome(s) and is(are) split into chr-based VCFs in "+out_prefix+".")
 
 
     NEIGHBOURS =  20     # number of neighbour variants to be checked
@@ -1041,8 +1362,9 @@ if __name__ == "__main__":
         THRESH=0.90          # the extent of  between samples
         num_samples =  500   # the number of times that we sample the haplotype graph (output of shapeit)
 
-        print("In case of error, please check the log files as well.")
+        print("In case of error, please check the shapeit log files in subfolders as well.")
         pair_linkage(chrs_list, shapeit_address, data_1000G_address, num_samples)
+		# print("In case of error, make srue that all variants in VCF file are bi-allelic. (Alternative allele shouldn't contain a comma)")
 
 
 
@@ -1056,14 +1378,13 @@ if __name__ == "__main__":
             subprocess.call(copy_pre_pair_bash, shell=True)
 
 
+    elif mode_phasme != "trio":
 
-    else:
-
-        print("Please specify the mode of phaseME correctly: either individual or precomputed")
+        print("Please specify the mode of phaseME correctly:  individual,  precomputed or trio")
 
         # 22_ont_pairs_500_0.9.txt"
 
-    if mode_phasme_qc_improver == "qc":
+    if mode_phasme_qc_improver == "qc" and (mode_phasme == "precomputed" or mode_phasme == "individual"):
 
 
         #### QC part ######
@@ -1072,15 +1393,15 @@ if __name__ == "__main__":
 
             print("working on chromosome ", chrom)
 
-            vcf_file_address = out_prefix+"/"+chrom+"/chr"+chrom+".vcf"
-            lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, chrom = read_vcf_file(vcf_file_address)
+            vcf_file_address_chr = out_prefix+"/"+chrom+"/chr"+chrom+".vcf"
+            lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, chrom = read_vcf_file(vcf_file_address_chr)
             #print(len(var_pos_het_list))
 
             file_pairs_address = out_prefix+"/"+chrom+"/"+chrom+"_pairs.txt"
 
             pop_inf_dic = read_file_pairs_forward(file_pairs_address)
 
-            out_name_prefix= vcf_file_address[:-4] #argv[3]  #
+            out_name_prefix= vcf_file_address_chr[:-4] #argv[3]  #
 
             # comparing input phased vcf (hap_blocks_sample1_dic) with pop (short_blocks_dic_pos)
             comparison_result_blocks=[]
@@ -1114,22 +1435,22 @@ if __name__ == "__main__":
 
 
 
-    elif mode_phasme_qc_improver == "improver":
+    elif mode_phasme_qc_improver == "improver" and (mode_phasme == "precomputed" or mode_phasme == "individual"):
 
 
         for chrom in chrs_list:
 
             print("working on chromosome ", chrom)
 
-            vcf_file_address = out_prefix+"/"+chrom+"/chr"+chrom+".vcf"
-            lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, chrom = read_vcf_file(vcf_file_address)
+            vcf_file_address_chr = out_prefix+"/"+chrom+"/chr"+chrom+".vcf"
+            lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, chrom = read_vcf_file(vcf_file_address_chr)
             #print(len(var_pos_het_list))
 
             file_pairs_address = out_prefix+"/"+chrom+"/"+chrom+"_pairs.txt"
 
             pop_inf_dic = read_file_pairs_forward(file_pairs_address)
 
-            out_name_prefix= vcf_file_address[:-4] #argv[3]  #
+            out_name_prefix= vcf_file_address_chr[:-4] #argv[3]  #
 
             # comparing input phased vcf (hap_blocks_sample1_dic) with pop (short_blocks_dic_pos)
             comparison_result_blocks=[]
@@ -1167,9 +1488,9 @@ if __name__ == "__main__":
             cut_list_blocks = decide_cut(id_blocks, allele_blocks, var_pos_blocks, comparison_result_blocks)
             #print(cut_list_blocks) # a list of list corresponding to the phase blocks
 
-            lines_list_improved_cut= improve_vcf_cut(lines_list, id_blocks, cut_list_blocks, var_pos_blocks)
-
-            vcf_file_improved_address = vcf_file_address[:-4]+'_improved.vcf'
+            #lines_list_improved_cut= improve_vcf_cut(lines_list, id_blocks, cut_list_blocks, var_pos_blocks)
+			lines_list_improved_cut=improve_vcf_cut(lines_list_improved_flipping, id_blocks, cut_list_blocks, var_pos_blocks, var_pos_het_list)
+            vcf_file_improved_address = vcf_file_address_chr[:-4]+'_improved.vcf'
             write_out_vcf(vcf_file_improved_address, lines_list_improved_cut)
 
             if chrom == chrs_list[0]:
@@ -1180,6 +1501,76 @@ if __name__ == "__main__":
 
         print("The QC report is ready at "+out_prefix+"/QC.csv")
         print("The improved VCF file is ready at "+out_prefix+"/improved.vcf")
+
+
+
+
+    elif mode_phasme_qc_improver == "qc" and mode_phasme == "trio" :
+        #### QC part ######
+
+        for chrom in chrs_list:
+
+            print("working on chromosome ", chrom)
+
+            vcf_file_address_chr = out_prefix+"/"+chrom+"/chr"+chrom+".vcf"
+
+			try:
+				lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, chrom , allele_mother_blocks , allele_father_blocks = read_trio_vcf_file(vcf_file_address_chr)
+			except:
+  				print("Are you sure that input vcf file contains three samples?")
+            #print(len(var_pos_het_list))
+			allele_son_gold_blocks, qual_blocks =compare_trio(allele_blocks,allele_mother_blocks,allele_father_blocks)
+
+            report_qc_address=out_name_prefix+'_qc.txt'
+            report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
+
+            if chrom == chrs_list[0]:
+                subprocess.call("head -n 3 "+report_qc_address+" > "+out_prefix+"/QC.csv", shell=True)
+
+            else:
+                subprocess.call("sed -n 3,3p "+report_qc_address+" >> "+out_prefix+"/QC.csv", shell=True)
+
+
+
+    elif mode_phasme_qc_improver == "improver" and mode_phasme == "trio" :
+
+
+        for chrom in chrs_list:
+
+            print("working on chromosome ", chrom)
+
+            vcf_file_address = out_prefix+"/"+chrom+"/chr"+chrom+".vcf"
+			lines_list, var_pos_het_list, line_number_het_list, id_blocks, allele_blocks, var_pos_blocks, stats_vcf, chrom , allele_mother_blocks , allele_father_blocks = read_trio_vcf_file(vcf_file_address)
+            #print(len(var_pos_het_list))
+			allele_son_gold_blocks, qual_blocks =compare_trio(allele_blocks,allele_mother_blocks,allele_father_blocks)
+
+            report_qc_address=out_name_prefix+'_qc.txt'
+            report_qc(report_qc_address, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
+
+            if chrom == chrs_list[0]:
+                subprocess.call("head -n 3 "+report_qc_address+" > "+out_prefix+"/QC.csv", shell=True)
+
+            else:
+                subprocess.call("sed -n 3,3p "+report_qc_address+" >> "+out_prefix+"/QC.csv", shell=True)
+
+
+			lines_list_improved= improve_vcf_trio(lines_list, id_blocks, allele_son_gold_blocks, var_pos_blocks, var_pos_het_list)
+
+
+			vcf_file_improved_address = vcf_file_address[:-4]+'_improved.vcf'
+            write_out_vcf(vcf_file_improved_address, lines_list_improved_cut)
+
+            if chrom == chrs_list[0]:
+                subprocess.call("cat "+vcf_file_improved_address+" > "+out_prefix+"/improved.vcf", shell=True)
+
+            else:
+                subprocess.call("grep -v \"#\" "+vcf_file_improved_address+" >> "+out_prefix+"/improved.vcf", shell=True)
+
+        print("The QC report is ready at "+out_prefix+"/QC.csv")
+        print("The improved VCF file is ready at "+out_prefix+"/improved.vcf")
+
+
+
 
 
 
