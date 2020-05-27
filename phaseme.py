@@ -1310,7 +1310,7 @@ if __name__ == "__main__":
 #    shapeit_address =  "/home/ssm/Documents/phaseme/"
 #    data_1000G_address = "/home/ssm/Documents/phaseme/data1/1000g/"
 #    mode_phasme = "precomputed"  # "precomputed" "individual"
-#    mode_phasme_qc_improver = "improver"  # "improver"  "qc"
+#    mode_phasme_qc_improver = "improver"  
 
 
     help_note=[ "\n   python phaseme.py qc my.vcf out ",
@@ -1388,7 +1388,7 @@ if __name__ == "__main__":
 
         # 22_ont_pairs_500_0.9.txt"
 
-    if mode_phasme_qc_improver == "qc" and (mode_phasme == "precomputed" or mode_phasme == "individual"):
+    if mode_phasme_qc_improver == "quality" and (mode_phasme == "precomputed" or mode_phasme == "individual"):
 
 
         #### QC part ######
@@ -1432,12 +1432,12 @@ if __name__ == "__main__":
             report_qc(report_qc_address_chr, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
 
             if chrom == chrs_list[0]:
-                subprocess.call("head -n 3 "+report_qc_address_chr+" > "+out_prefix+"/QC.csv", shell=True)
+                subprocess.call("head -n 3 "+report_qc_address_chr+" > "+out_prefix+"/quality.csv", shell=True)
 
             else:
-                subprocess.call("sed -n 3,3p "+report_qc_address_chr+" >> "+out_prefix+"/QC.csv", shell=True)
+                subprocess.call("sed -n 3,3p "+report_qc_address_chr+" >> "+out_prefix+"/quality.csv", shell=True)
 
-            print("The QC report is ready at "+out_prefix+"/QC.csv")
+            print("The QC report is ready at "+out_prefix+"/quality.csv")
 
 
     elif mode_phasme_qc_improver == "improver" and (mode_phasme == "precomputed" or mode_phasme == "individual"):
@@ -1483,10 +1483,10 @@ if __name__ == "__main__":
             report_qc(report_qc_address_chr, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
 
             if chrom == chrs_list[0]:
-                subprocess.call("head -n 3 "+report_qc_address_chr+" > "+out_prefix+"/QC.csv", shell=True)
+                subprocess.call("head -n 3 "+report_qc_address_chr+" > "+out_prefix+"/quality.csv", shell=True)
 
             else:
-                subprocess.call("sed -n 3,3p "+report_qc_address_chr+" >> "+out_prefix+"/QC.csv", shell=True)
+                subprocess.call("sed -n 3,3p "+report_qc_address_chr+" >> "+out_prefix+"/quality.csv", shell=True)
 
 
 
@@ -1506,13 +1506,13 @@ if __name__ == "__main__":
             else:
                 subprocess.call("grep -v \"#\" "+vcf_file_improved_address_chr+" >> "+out_prefix+"/improved.vcf", shell=True)
 
-        print("The QC report is ready at "+out_prefix+"/QC.csv")
+        print("The QC report is ready at "+out_prefix+"/quality.csv")
         print("The improved VCF file is ready at "+out_prefix+"/improved.vcf")
 
 
 
 
-    elif mode_phasme_qc_improver == "qc" and mode_phasme == "trio" :
+    elif mode_phasme_qc_improver == "quality" and mode_phasme == "trio" :
         #### QC part ######
 
         for chrom in chrs_list:
@@ -1533,12 +1533,12 @@ if __name__ == "__main__":
             report_qc(report_qc_address_chr, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
 
             if chrom == chrs_list[0]:
-                subprocess.call("head -n 3 "+report_qc_address_chr+" > "+out_prefix+"/QC.csv", shell=True)
+                subprocess.call("head -n 3 "+report_qc_address_chr+" > "+out_prefix+"/quality.csv", shell=True)
 
             else:
-                subprocess.call("sed -n 3,3p "+report_qc_address_chr+" >> "+out_prefix+"/QC.csv", shell=True)
+                subprocess.call("sed -n 3,3p "+report_qc_address_chr+" >> "+out_prefix+"/quality.csv", shell=True)
 
-            print("The QC report is ready at "+out_prefix+"/QC.csv")
+            print("The QC report is ready at "+out_prefix+"/quality.csv")
 
     elif mode_phasme_qc_improver == "improver" and mode_phasme == "trio" :
 
@@ -1558,10 +1558,10 @@ if __name__ == "__main__":
             report_qc(report_qc_address_chr, id_blocks, qual_blocks, allele_blocks, stats_vcf,chrom)
 
             if chrom == chrs_list[0]:
-                subprocess.call("head -n 3 "+report_qc_address_chr+" > "+out_prefix+"/QC.csv", shell=True)
+                subprocess.call("head -n 3 "+report_qc_address_chr+" > "+out_prefix+"/quality.csv", shell=True)
 
             else:
-                subprocess.call("sed -n 3,3p "+report_qc_address_chr+" >> "+out_prefix+"/QC.csv", shell=True)
+                subprocess.call("sed -n 3,3p "+report_qc_address_chr+" >> "+out_prefix+"/quality.csv", shell=True)
 
 
             lines_list_improved= improve_vcf_trio(lines_list, id_blocks, allele_son_gold_blocks, var_pos_blocks, var_pos_het_list)
@@ -1576,7 +1576,7 @@ if __name__ == "__main__":
             else:
                 subprocess.call("grep -v \"#\" "+vcf_file_improved_address_chr+" >> "+out_prefix+"/improved.vcf", shell=True)
 
-        print("The QC report is ready at "+out_prefix+"/QC.csv")
+        print("The QC report is ready at "+out_prefix+"/quality.csv")
         print("The improved VCF file is ready at "+out_prefix+"/improved.vcf")
 
 
