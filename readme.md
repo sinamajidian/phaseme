@@ -13,7 +13,7 @@ PhaseME is a tool set to assess the quality of the per read phasing information 
 ```
 python phaseme.py improver my.vcf output_prefix
 ```
-If you only want to have the QC report use `qc` instead of `improver`.
+If you only want to have the quality assessment report use `quality` instead of `improver`.
 
 
 ## Installation Test
@@ -24,7 +24,7 @@ Please try our sample data to establish the correctness of the pipeline installa
 python phaseme.py improver example/my.vcf example/out
 ```
 
-The output will be a QC report `example/out/QC.csv` as well as an improved version of the input phased VCF `example/out/improved.vcf`.
+The output will be a quality assessment report `example/out/quality.csv` as well as an improved version of the input phased VCF `example/out/improved.vcf`.
 
 # Complete usage
 
@@ -52,12 +52,12 @@ python phaseme.py improver my.vcf output_prefix  /path/to/shapeit /path/to/1000G
 
 PhaseME can also assess and improve the phasings results using parental data instead of linkage information. The user should prepare a three-sample VCF including son, mother and father SNV in this order. This can be done using e.g. `bcftools merge`. Prior to that you may need `bgzip`, `tabix` and `bcftools index` on all three samples. 
 
-To obtain QC insights:
+To obtain quality insights:
 ```
-python phaseme.py qc example/trio.vcf example/out_trio trio
+python phaseme.py quality example/trio.vcf example/out_trio trio
 ```
 
-Once you want to imporve phasing results:
+Once you want to improve phasing results:
 ```
 python phaseme.py improver example/trio.vcf example/out_trio trio
 ```
