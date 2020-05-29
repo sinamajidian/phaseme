@@ -1437,7 +1437,7 @@ if __name__ == "__main__":
             else:
                 subprocess.call("sed -n 3,3p "+report_qc_address_chr+" >> "+out_prefix+"/quality.csv", shell=True)
 
-            print("The QC report is ready at "+out_prefix+"/quality.csv")
+            print("The quality assessment report is ready at "+out_prefix+"/quality.csv")
 
 
     elif mode_phasme_qc_improver == "improver" and (mode_phasme == "precomputed" or mode_phasme == "individual"):
@@ -1506,7 +1506,7 @@ if __name__ == "__main__":
             else:
                 subprocess.call("grep -v \"#\" "+vcf_file_improved_address_chr+" >> "+out_prefix+"/improved.vcf", shell=True)
 
-        print("The QC report is ready at "+out_prefix+"/quality.csv")
+        print("The quality assessment report is ready at "+out_prefix+"/quality.csv")
         print("The improved VCF file is ready at "+out_prefix+"/improved.vcf")
 
 
@@ -1538,7 +1538,7 @@ if __name__ == "__main__":
             else:
                 subprocess.call("sed -n 3,3p "+report_qc_address_chr+" >> "+out_prefix+"/quality.csv", shell=True)
 
-            print("The QC report is ready at "+out_prefix+"/quality.csv")
+            print("The quality assessment report is ready at "+out_prefix+"/quality.csv")
 
     elif mode_phasme_qc_improver == "improver" and mode_phasme == "trio" :
 
@@ -1576,7 +1576,7 @@ if __name__ == "__main__":
             else:
                 subprocess.call("grep -v \"#\" "+vcf_file_improved_address_chr+" >> "+out_prefix+"/improved.vcf", shell=True)
 
-        print("The QC report is ready at "+out_prefix+"/quality.csv")
+        print("The quality assessment report is ready at "+out_prefix+"/quality.csv")
         print("The improved VCF file is ready at "+out_prefix+"/improved.vcf")
 
 
