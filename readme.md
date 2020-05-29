@@ -54,7 +54,7 @@ PhaseME can also assess and improve the phasings results using parental data ins
 
 To obtain quality insights:
 ```
-python phaseme.py quality example/trio.vcf example/out_trio trio
+python phaseme.py quality example/trio.vcf example/out_trio_q trio
 ```
 
 Once you want to improve phasing results:
