@@ -64,6 +64,9 @@ python phaseme.py improver example/trio.vcf example/out_trio trio
 
 
 
+For using PhaseME in MAC computer please check the folder [mac](https://github.com/smajidian/phaseme/tree/master/mac)
+
+
 
 # Citation:
 
