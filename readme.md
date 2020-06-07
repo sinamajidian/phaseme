@@ -11,6 +11,7 @@ PhaseME is a tool set to assess the quality of the per read phasing information 
 2- Run PhaseME using Python3 on Linux to obtain stats and improve the quality of phase blocks. The only requirement is Numpy.
 
 ```
+tar -xzf precomputed/pairlist.tar.gz
 python phaseme.py improver my.vcf output_prefix
 ```
 If you only want to have the quality assessment report use `quality` instead of `improver`.
