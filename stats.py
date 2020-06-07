@@ -17,7 +17,7 @@ The code prints the stats.
 
 
 def  read_vcf_file_with_truth(vcf_file_address):
-    
+
 
 
     vcf_file = open(vcf_file_address,'r');
@@ -80,7 +80,10 @@ def  read_vcf_file_with_truth(vcf_file_address):
 
 
 
-    return hap_blocks_sample1_dic, hap_blocks_sample2_dic
+    return hap_blocks_sample1_dic, hap_blocks_sample2_dic, hap_len_sample1_dic
+
+
+
 
 
 
@@ -183,7 +186,7 @@ def compute_stats(hap_blocks_sample1_dic, hap_blocks_sample2_dic):
         for i in range(1,len(list1)):
             length1= list1[i]-list1[i-1]
             list_length.append(length1)
- 
+
 
         odd_sum = sum(list_length[0::2])
         even_sum = sum(list_length[1::2])
@@ -194,21 +197,21 @@ def compute_stats(hap_blocks_sample1_dic, hap_blocks_sample2_dic):
 
     list_length_minor= np.array(list_length_minor)
 
-    return list_length_minor
+    return list_length_minor, list_hams
 
 
 
 
 if __name__ == "__main__":
 
-    
+
     vcf_file_address = argv[1]
-    
-    hap_blocks_sample1_dic, hap_blocks_sample2_dic = read_vcf_file_with_truth(vcf_file_address)
-    
+
+    hap_blocks_sample1_dic, hap_blocks_sample2_dic, hap_len_sample1_dic = read_vcf_file_with_truth(vcf_file_address)
+
     print('Number of blocks in sample:',len(hap_blocks_sample1_dic))
 
-    list_length_minor= compute_stats(hap_blocks_sample1_dic, hap_blocks_sample2_dic):
+    list_length_minor, list_hams= compute_stats(hap_blocks_sample1_dic, hap_blocks_sample2_dic)
 
 
     tr=50
@@ -230,8 +233,3 @@ if __name__ == "__main__":
     # print(list_len)
     print("Mean of phase block length(kb): " ,round(np.mean(list_len_kb)/1000,2))
     print("Hamming error rate: ",round(np.mean(np.array(list_hams)*100),2))
-
-    
-    
-    
-    
