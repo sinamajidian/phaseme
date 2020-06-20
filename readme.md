@@ -71,4 +71,7 @@ For using PhaseME in MAC computer please check the folder [mac](https://github.c
 
 # Citation:
 
-Please see and cite our manuscript: "PhaseME: automatic assessment of phasing quality and phasing improvement"
+Please see and cite our manuscript: "PhaseME: automatic assessment of phasing quality and phasing improvement", GigaSceince, 2020.
+
+PhaseME has been registered in [BioTools](https://bio.tools/phaseme).
+
